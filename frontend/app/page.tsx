@@ -73,7 +73,7 @@ export default function Home() {
             {/* Coluna de Imagem/Banner */}
             <div className="flex items-center justify-center md:order-2">
               <img
-                src="https://via.placeholder.com/500x500.png?text=Banner+Atrativo+ROC"
+                src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop&q=80"
                 alt="Banner de um prato de restaurante parceiro do ROC"
                 className="max-w-full rounded-2xl shadow-medium"
               />

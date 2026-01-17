@@ -20,7 +20,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante Sabor do Norte",
     city: "Porto Velho",
     discount: "20% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+1",
+    image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop&q=80",
     category: "Brasileira",
   },
   {
@@ -28,7 +28,7 @@ const restaurants: Restaurant[] = [
     name: "Cantina Italiana",
     city: "Porto Velho",
     discount: "15% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+2",
+    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop&q=80",
     category: "Italiana",
   },
   {
@@ -36,7 +36,7 @@ const restaurants: Restaurant[] = [
     name: "Churrascaria Gaúcha",
     city: "Porto Velho",
     discount: "25% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+3",
+    image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop&q=80",
     category: "Churrascaria",
   },
   {
@@ -44,7 +44,7 @@ const restaurants: Restaurant[] = [
     name: "Sushi House",
     city: "Porto Velho",
     discount: "30% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+4",
+    image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&q=80",
     category: "Japonesa",
   },
   {
@@ -52,7 +52,7 @@ const restaurants: Restaurant[] = [
     name: "Pizzaria Forno a Lenha",
     city: "Porto Velho",
     discount: "20% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+5",
+    image: "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=300&fit=crop&q=80",
     category: "Pizzaria",
   },
   {
@@ -60,7 +60,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante Beira Rio",
     city: "Ji-Paraná",
     discount: "15% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+6",
+    image: "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=400&h=300&fit=crop&q=80",
     category: "Brasileira",
   },
   {
@@ -68,7 +68,7 @@ const restaurants: Restaurant[] = [
     name: "Café Central",
     city: "Ji-Paraná",
     discount: "10% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+7",
+    image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&q=80",
     category: "Cafeteria",
   },
   {
@@ -76,7 +76,7 @@ const restaurants: Restaurant[] = [
     name: "Bistrô Moderno",
     city: "Ji-Paraná",
     discount: "20% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+8",
+    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop&q=80",
     category: "Contemporânea",
   },
   {
@@ -84,7 +84,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante Tropical",
     city: "Ariquemes",
     discount: "15% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+9",
+    image: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop&q=80",
     category: "Brasileira",
   },
   {
@@ -92,7 +92,7 @@ const restaurants: Restaurant[] = [
     name: "Lanchonete Express",
     city: "Ariquemes",
     discount: "10% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+10",
+    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop&q=80",
     category: "Fast Food",
   },
   {
@@ -100,7 +100,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante do Vale",
     city: "Vilhena",
     discount: "20% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+11",
+    image: "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400&h=300&fit=crop&q=80",
     category: "Brasileira",
   },
   {
@@ -108,7 +108,7 @@ const restaurants: Restaurant[] = [
     name: "Cantina Mineira",
     city: "Vilhena",
     discount: "15% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+12",
+    image: "https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=400&h=300&fit=crop&q=80",
     category: "Brasileira",
   },
   {
@@ -116,7 +116,7 @@ const restaurants: Restaurant[] = [
     name: "Sabor Caseiro",
     city: "Cacoal",
     discount: "10% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+13",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop&q=80",
     category: "Brasileira",
   },
   {
@@ -124,7 +124,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante Família",
     city: "Cacoal",
     discount: "15% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+14",
+    image: "https://images.unsplash.com/photo-1550966871-3ed3cdb5ed0c?w=400&h=300&fit=crop&q=80",
     category: "Brasileira",
   },
   {
@@ -132,7 +132,7 @@ const restaurants: Restaurant[] = [
     name: "Churrascaria Premium",
     city: "Porto Velho",
     discount: "25% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+15",
+    image: "https://images.unsplash.com/photo-1558030006-450675393462?w=400&h=300&fit=crop&q=80",
     category: "Churrascaria",
   },
   {
@@ -140,7 +140,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante Mar e Terra",
     city: "Porto Velho",
     discount: "20% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+16",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop&q=80",
     category: "Brasileira",
   },
   {
@@ -148,7 +148,7 @@ const restaurants: Restaurant[] = [
     name: "Café Gourmet",
     city: "Ji-Paraná",
     discount: "10% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+17",
+    image: "https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&h=300&fit=crop&q=80",
     category: "Cafeteria",
   },
   {
@@ -156,7 +156,7 @@ const restaurants: Restaurant[] = [
     name: "Pizzaria Artesanal",
     city: "Ariquemes",
     discount: "20% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+18",
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop&q=80",
     category: "Pizzaria",
   },
   {
@@ -164,7 +164,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante Vegetariano",
     city: "Vilhena",
     discount: "15% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+19",
+    image: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop&q=80",
     category: "Vegetariana",
   },
   {
@@ -172,7 +172,7 @@ const restaurants: Restaurant[] = [
     name: "Lanchonete 24h",
     city: "Cacoal",
     discount: "10% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+20",
+    image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&h=300&fit=crop&q=80",
     category: "Fast Food",
   },
   {
@@ -180,7 +180,7 @@ const restaurants: Restaurant[] = [
     name: "Bistrô Francês",
     city: "Porto Velho",
     discount: "30% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+21",
+    image: "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop&q=80",
     category: "Francesa",
   },
   {
@@ -188,7 +188,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante Árabe",
     city: "Ji-Paraná",
     discount: "20% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+22",
+    image: "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop&q=80",
     category: "Árabe",
   },
   {
@@ -196,7 +196,7 @@ const restaurants: Restaurant[] = [
     name: "Cantina Mexicana",
     city: "Ariquemes",
     discount: "15% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+23",
+    image: "https://images.unsplash.com/photo-1597838816882-4435b1977fbe?w=400&h=300&fit=crop&q=80",
     category: "Mexicana",
   },
   {
@@ -204,7 +204,7 @@ const restaurants: Restaurant[] = [
     name: "Restaurante Japonês",
     city: "Vilhena",
     discount: "25% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+24",
+    image: "https://images.unsplash.com/photo-1579584425555-c3ce17fd4351?w=400&h=300&fit=crop&q=80",
     category: "Japonesa",
   },
   {
@@ -212,7 +212,7 @@ const restaurants: Restaurant[] = [
     name: "Churrascaria Rodízio",
     city: "Cacoal",
     discount: "20% OFF",
-    image: "https://via.placeholder.com/400x300.png?text=Restaurante+25",
+    image: "https://images.unsplash.com/photo-1544025162-d76694265947?w=400&h=300&fit=crop&q=80",
     category: "Churrascaria",
   },
 ];

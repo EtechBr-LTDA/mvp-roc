@@ -1,80 +1,26 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import QRCode from "qrcode";
 import { ArrowLeft, Clock, CheckCircle, WarningCircle, ForkKnife, MapPin } from "@phosphor-icons/react";
 
-interface VoucherPageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
-// Dados mockados do restaurante - será substituído por API
-function getRestaurantData(restaurantId: string) {
-  const restaurants: Record<
-    string,
-    {
-      id: string;
-      name: string;
-      category: string;
-      discount: string;
-      logo: string;
-      city: string;
-      offer: {
-        title: string;
-        description: string;
-        rules: string[];
-        validity: string;
-      };
-    }
-  > = {
-    "1": {
-      id: "1",
-      name: "Cantina Bella Italia",
-      category: "Italiano",
-      discount: "30%",
-      logo: "🍝",
-      city: "Porto Velho",
-      offer: {
-        title: "30% OFF em qualquer prato principal",
-        description:
-          "Aproveite 30% de desconto em todos os pratos principais da nossa carta. Inclui massas, risotos e carnes.",
-        rules: [
-          "Válido de segunda a quinta-feira",
-          "Não cumulativo com outras promoções",
-          "Um cupom por mesa",
-          "Reservas recomendadas",
-        ],
-        validity: "Válido até 31/12/2024",
-      },
-    },
+interface VoucherDetail {
+  id: string;
+  code: string;
+  used: boolean;
+  restaurant: {
+    name: string;
+    city: string;
+    category: string;
+    discount: string;
   };
-
-  return (
-    restaurants[restaurantId] || {
-      id: restaurantId,
-      name: `Restaurante Parceiro ${restaurantId}`,
-      category: "Brasileira",
-      discount: "20%",
-      logo: "🍽️",
-      city: "Porto Velho",
-      offer: {
-        title: "20% OFF em todo o cardápio",
-        description: "Desconto válido em todos os pratos do menu.",
-        rules: ["Válido todos os dias", "Não cumulativo com outras promoções", "Um cupom por pessoa"],
-        validity: "Válido até 31/12/2024",
-      },
-    }
-  );
 }
 
-export default function VoucherPage({ params }: VoucherPageProps) {
-  const resolvedParams = use(params);
-  const voucherId = resolvedParams.id;
-  const restaurant = getRestaurantData(voucherId);
-  const voucherCode = `ROC${String(voucherId).padStart(4, "0")}`; // Formato ROC0001, ROC0002, etc.
+export default function VoucherPage() {
+  const params = useParams<{ id: string }>();
+  const voucherId = params.id;
 
   const [qrDataUrl, setQrDataUrl] = useState<string>("");
   const [isGenerating, setIsGenerating] = useState(false);

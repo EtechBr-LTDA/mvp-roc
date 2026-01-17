@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { User, Envelope, Lock, IdentificationCard, Check } from "@phosphor-icons/react";
 
@@ -16,6 +17,7 @@ export default function RegisterPage() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitted, setSubmitted] = useState(false);
+  const router = useRouter();
 
   // Formatação de CPF: 000.000.000-00
   const formatCPF = (value: string) => {
@@ -66,7 +68,7 @@ export default function RegisterPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: Record<string, string> = {};
 
@@ -108,17 +110,26 @@ export default function RegisterPage() {
       return;
     }
 
-    // Se passou nas validações, simular envio
+    // Se passou nas validações, fazer chamada à API
     setErrors({});
     setSubmitted(true);
 
-    // Aqui seria feita a chamada à API
-    console.log("Dados do formulário:", {
-      name: formData.name,
-      cpf: formData.cpf.replace(/\D/g, ""), // Enviar apenas números
-      email: formData.email,
-      password: formData.password, // Em produção, isso seria hashado no backend
-    });
+    try {
+      const { apiClient } = await import("@/app/lib/api");
+      await apiClient.register({
+        name: formData.name,
+        cpf: formData.cpf.replace(/\D/g, ""), // Enviar apenas números
+        email: formData.email,
+        password: formData.password,
+        passwordConfirmation: formData.passwordConfirmation,
+      });
+      // Redirecionamento será feito após sucesso (tela de sucesso já existe)
+    } catch (error: any) {
+      setSubmitted(false);
+      const errorMessage = error?.message || "Erro ao criar conta. Tente novamente.";
+      setErrors({ submit: errorMessage });
+      console.error("Erro ao registrar:", error);
+    }
   };
 
   // Tela de Sucesso
@@ -138,6 +149,10 @@ export default function RegisterPage() {
           <Link
             href="/checkout"
             className="inline-block w-full rounded-lg bg-[var(--color-roc-primary)] px-[var(--spacing-4)] py-[var(--spacing-2)] text-sm font-semibold text-[var(--color-white)] transition-all hover:bg-[var(--color-roc-primary-dark)]"
+            onClick={(e) => {
+              e.preventDefault();
+              router.push("/checkout");
+            }}
           >
             Continuar para pagamento
           </Link>

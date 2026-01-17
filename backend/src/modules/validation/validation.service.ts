@@ -47,5 +47,43 @@ export class ValidationService {
       }
     };
   }
+
+  validateVoucherByCode(code: string) {
+    // Extrair ID numérico do código (ex: "ROC-12345" -> 12345 ou "12345" -> 12345)
+    const codeMatch = code.replace(/[^0-9]/g, "");
+    const voucherId = Number(codeMatch);
+    
+    if (!Number.isInteger(voucherId) || voucherId <= 0) {
+      throw new BadRequestException("Código de voucher inválido");
+    }
+
+    // Buscar voucher por ID
+    const voucher = this.vouchersService.findById(voucherId);
+    
+    if (!voucher) {
+      throw new BadRequestException("Voucher não encontrado");
+    }
+
+    if (voucher.used) {
+      throw new BadRequestException("Voucher já foi utilizado");
+    }
+
+    // Usar voucher por ID
+    this.vouchersService.useVoucherById(voucher.id);
+
+    return {
+      valid: true,
+      message: "Voucher validado com sucesso",
+      voucher: {
+        id: voucher.id,
+        code: `ROC-${String(voucher.id).padStart(5, "0")}`,
+        restaurant: {
+          name: voucher.restaurantName,
+          city: voucher.city,
+          offer: "Desconto válido"
+        }
+      }
+    };
+  }
 }
 

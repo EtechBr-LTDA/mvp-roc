@@ -26,44 +26,49 @@ export default function ValidatePage() {
   const [couponInfo, setCouponInfo] = useState<{ restaurant: string; offer: string } | null>(null);
   const [isValidating, setIsValidating] = useState(false);
 
-  // Dados mockados - será substituído por API
-  const mockValidCoupons: Record<string, { restaurant: string; offer: string }> = {
-    ROC0001: {
-      restaurant: "Cantina Bella Italia",
-      offer: "30% OFF em qualquer prato principal",
-    },
-    ROC0002: {
-      restaurant: "Churrascaria Gaúcha",
-      offer: "25% OFF em todo o cardápio",
-    },
-    ROC0123: {
-      restaurant: "Restaurante Sabor do Norte",
-      offer: "20% OFF em todo o menu",
-    },
-  };
-
-  const handleValidate = (code: string) => {
-    if (!code.trim()) return;
+  const handleValidate = async (code: string) => {
+    if (!code.trim() || isValidating) {
+      return;
+    }
 
     setIsValidating(true);
     setValidationStatus("validating");
 
-    // Simular validação (delay de 1.2s)
-    setTimeout(() => {
-      const codeUpper = code.toUpperCase().trim();
-      const coupon = mockValidCoupons[codeUpper];
+    try {
+      const response = await fetch("/api/vouchers/validate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ code }),
+      });
 
-      if (coupon) {
-        // Cupom válido encontrado!
-        setCouponInfo(coupon);
-        setValidationStatus("success");
-      } else {
+      const data = await response.json();
+
+      if (!response.ok || !data.valid) {
         setValidationStatus("error");
+        setCouponInfo(null);
+        setIsValidating(false);
+        return;
+      }
+
+      if (data.voucher && data.voucher.restaurant) {
+        setCouponInfo({
+          restaurant: data.voucher.restaurant.name,
+          offer: data.voucher.restaurant.offer,
+        });
+      } else {
         setCouponInfo(null);
       }
 
+      setValidationStatus("success");
+    } catch (error) {
+      console.error("Erro ao validar cupom:", error);
+      setValidationStatus("error");
+      setCouponInfo(null);
+    } finally {
       setIsValidating(false);
-    }, 1200);
+    }
   };
 
   const handleManualSubmit = (e: React.FormEvent) => {
@@ -215,7 +220,7 @@ export default function ValidatePage() {
                   Digitar Código
                 </h1>
                 <p className="text-sm text-[var(--color-text-medium)]">
-                  Digite o código de 8 caracteres do cupom
+                  Digite o código ROC-XXXXX do cupom
               </p>
             </div>
 
@@ -226,25 +231,25 @@ export default function ValidatePage() {
                     value={inputCode}
                     onChange={(e) =>
                       setInputCode(
-                        e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "")
+                        e.target.value.toUpperCase().replace(/[^A-Z0-9-]/g, "")
                       )
                     }
                     className="w-full rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-bg-light)] px-4 py-3 text-center text-xl tracking-[0.3em] font-mono uppercase outline-none transition-all focus:border-[var(--color-roc-primary)] focus:ring-2 focus:ring-[var(--color-roc-primary)]/20 sm:px-5 sm:py-4 sm:text-2xl"
-                    placeholder="ROC0001"
-                    maxLength={8}
+                    placeholder="ROC-XXXXX"
+                    maxLength={9}
                     autoFocus
                     autoComplete="off"
                     autoCorrect="off"
                     spellCheck="false"
                   />
                   <p className="mt-2 text-center text-xs text-[var(--color-text-medium)]">
-                    {inputCode.length}/8 caracteres
+                    {inputCode.length}/9 caracteres
                   </p>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={inputCode.length !== 8}
+                  disabled={inputCode.length !== 9}
                   className="w-full rounded-xl bg-gradient-to-r from-[var(--color-roc-primary)] to-[var(--color-roc-primary-light)] px-4 py-3 text-sm font-semibold text-[var(--color-white)] shadow-medium transition-all hover:shadow-large disabled:cursor-not-allowed disabled:opacity-50 sm:py-4 sm:text-base"
                 >
                   Validar Cupom

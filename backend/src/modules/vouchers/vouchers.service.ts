@@ -64,8 +64,30 @@ export class VouchersService {
     return voucher;
   }
 
+  findById(voucherId: number): Voucher | null {
+    const voucher = this.vouchers.find((v) => v.id === voucherId);
+    return voucher || null;
+  }
+
   useVoucher(userId: number, voucherId: number): Voucher {
     const voucher = this.findForUser(userId, voucherId);
+
+    if (voucher.used) {
+      throw new BadRequestException("Voucher já utilizado");
+    }
+
+    voucher.used = true;
+    voucher.usedAt = new Date();
+
+    return voucher;
+  }
+
+  useVoucherById(voucherId: number): Voucher {
+    const voucher = this.findById(voucherId);
+    
+    if (!voucher) {
+      throw new NotFoundException("Voucher não encontrado");
+    }
 
     if (voucher.used) {
       throw new BadRequestException("Voucher já utilizado");

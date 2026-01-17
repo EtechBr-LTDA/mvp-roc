@@ -1,48 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Header } from "../../components/Header";
 import { Footer } from "../../components/Footer";
 import { MapPin, Gift, CheckCircle, MagnifyingGlass } from "@phosphor-icons/react";
 
-// Dados mockados dos vouchers - será substituído por API
-const vouchers = [
-  { id: 1, restaurantName: "Restaurante Sabor do Norte", city: "Porto Velho", discount: "20% OFF", used: false },
-  { id: 2, restaurantName: "Cantina Italiana", city: "Porto Velho", discount: "15% OFF", used: false },
-  { id: 3, restaurantName: "Churrascaria Gaúcha", city: "Porto Velho", discount: "25% OFF", used: false },
-  { id: 4, restaurantName: "Sushi House", city: "Porto Velho", discount: "30% OFF", used: false },
-  { id: 5, restaurantName: "Pizzaria Forno a Lenha", city: "Porto Velho", discount: "20% OFF", used: false },
-  { id: 6, restaurantName: "Restaurante Beira Rio", city: "Ji-Paraná", discount: "15% OFF", used: false },
-  { id: 7, restaurantName: "Café Central", city: "Ji-Paraná", discount: "10% OFF", used: false },
-  { id: 8, restaurantName: "Bistrô Moderno", city: "Ji-Paraná", discount: "20% OFF", used: false },
-  { id: 9, restaurantName: "Restaurante Tropical", city: "Ariquemes", discount: "15% OFF", used: false },
-  { id: 10, restaurantName: "Lanchonete Express", city: "Ariquemes", discount: "10% OFF", used: false },
-  { id: 11, restaurantName: "Restaurante do Vale", city: "Vilhena", discount: "20% OFF", used: false },
-  { id: 12, restaurantName: "Cantina Mineira", city: "Vilhena", discount: "15% OFF", used: false },
-  { id: 13, restaurantName: "Sabor Caseiro", city: "Cacoal", discount: "10% OFF", used: false },
-  { id: 14, restaurantName: "Restaurante Família", city: "Cacoal", discount: "15% OFF", used: false },
-  { id: 15, restaurantName: "Churrascaria Premium", city: "Porto Velho", discount: "25% OFF", used: false },
-  { id: 16, restaurantName: "Restaurante Mar e Terra", city: "Porto Velho", discount: "20% OFF", used: false },
-  { id: 17, restaurantName: "Café Gourmet", city: "Ji-Paraná", discount: "10% OFF", used: false },
-  { id: 18, restaurantName: "Pizzaria Artesanal", city: "Ariquemes", discount: "20% OFF", used: false },
-  { id: 19, restaurantName: "Restaurante Vegetariano", city: "Vilhena", discount: "15% OFF", used: false },
-  { id: 20, restaurantName: "Lanchonete 24h", city: "Cacoal", discount: "10% OFF", used: false },
-  { id: 21, restaurantName: "Bistrô Francês", city: "Porto Velho", discount: "30% OFF", used: false },
-  { id: 22, restaurantName: "Restaurante Árabe", city: "Ji-Paraná", discount: "20% OFF", used: false },
-  { id: 23, restaurantName: "Cantina Mexicana", city: "Ariquemes", discount: "15% OFF", used: false },
-  { id: 24, restaurantName: "Restaurante Japonês", city: "Vilhena", discount: "25% OFF", used: false },
-  { id: 25, restaurantName: "Churrascaria Rodízio", city: "Cacoal", discount: "20% OFF", used: false },
-];
-
-const cities = Array.from(new Set(vouchers.map((v) => v.city)));
 const categories = ["Todos", "Porto Velho", "Ji-Paraná", "Ariquemes", "Vilhena", "Cacoal"];
 
+interface Voucher {
+  id: string;
+  code: string;
+  restaurantName: string;
+  city: string;
+  discountLabel: string;
+  used: boolean;
+  imageUrl: string;
+}
+
 export default function VouchersPage() {
-  const [user] = useState({ name: "João Silva" }); // Mock - em produção viria do contexto de autenticação
+  const [user, setUser] = useState<{ name: string }>({ name: "João Silva" });
+  const [vouchers, setVouchers] = useState<Voucher[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCity, setSelectedCity] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("Todos");
   const [searchTerm, setSearchTerm] = useState<string>("");
+
+  useEffect(() => {
+    const fetchVouchers = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Obter token do localStorage (cliente)
+        const token = localStorage.getItem("auth_token");
+        const userId = localStorage.getItem("user_id");
+
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+        };
+
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
+        }
+
+        if (userId) {
+          headers["x-user-id"] = userId;
+        }
+
+        const response = await fetch("/api/vouchers", {
+          headers,
+        });
+
+        if (!response.ok) {
+          throw new Error("Erro ao carregar vouchers");
+        }
+
+        const data = await response.json();
+
+        if (data.profile?.name) {
+          setUser({ name: data.profile.name });
+        }
+
+        const normalized: Voucher[] =
+          data.vouchers?.map((voucher: any) => ({
+            id: voucher.id,
+            code: voucher.code,
+            restaurantName: voucher.restaurantName,
+            city: voucher.city,
+            discountLabel: voucher.discountLabel,
+            used: voucher.used,
+            imageUrl: voucher.imageUrl,
+          })) ?? [];
+
+        setVouchers(normalized);
+      } catch (err) {
+        console.error(err);
+        setError("Não foi possível carregar seus vouchers. Tente novamente.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchVouchers();
+  }, []);
+
+  const cities = Array.from(new Set(vouchers.map((v) => v.city)));
 
   // Filtrar vouchers
   const filteredVouchers = vouchers.filter((voucher) => {
@@ -136,7 +180,19 @@ export default function VouchersPage() {
           </div>
 
           {/* Vouchers Grid */}
-          {filteredVouchers.length === 0 ? (
+          {isLoading ? (
+            <div className="py-12 text-center">
+              <p className="text-[var(--color-text-medium)]">
+                Carregando seus vouchers...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="py-12 text-center">
+              <p className="text-[var(--color-text-medium)] mb-2">
+                {error}
+              </p>
+            </div>
+          ) : filteredVouchers.length === 0 ? (
             <div className="py-12 text-center">
               <p className="text-[var(--color-text-medium)]">
                 Nenhum voucher encontrado com os filtros selecionados.
@@ -148,12 +204,33 @@ export default function VouchersPage() {
                 <Link
                   key={voucher.id}
                   href={`/account/vouchers/${voucher.id}`}
-                  className={`group rounded-2xl border-2 bg-[var(--color-white)] p-[var(--spacing-4)] shadow-soft transition-all hover:shadow-medium ${
+                  className={`group rounded-2xl border-2 bg-[var(--color-white)] overflow-hidden shadow-soft transition-all hover:shadow-medium ${
                     voucher.used
                       ? "border-[var(--color-border)] opacity-60 grayscale"
                       : "border-[var(--color-border)] hover:border-[var(--color-roc-primary-light)]"
                   }`}
                 >
+                  <div className="relative h-48 overflow-hidden bg-[var(--color-bg-light)]">
+                    <img
+                      src={voucher.imageUrl}
+                      alt={voucher.restaurantName}
+                      className={`h-full w-full object-cover transition-transform duration-300 ${
+                        voucher.used ? "" : "group-hover:scale-110"
+                      }`}
+                    />
+                    <div
+                      className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-bold text-[var(--color-white)] shadow-medium ${
+                        voucher.used
+                          ? "bg-[var(--color-text-medium)]"
+                          : "bg-[var(--color-roc-primary)]"
+                      }`}
+                    >
+                      {voucher.discountLabel}
+                    </div>
+                  </div>
+
+                  {/* Conteúdo do Card */}
+                  <div className="p-[var(--spacing-4)]">
                   <div className="mb-[var(--spacing-3)] flex items-start justify-between">
                     <div className="flex-1">
                       <div className="mb-2 flex items-center gap-[var(--spacing-2)]">
@@ -167,7 +244,7 @@ export default function VouchersPage() {
                           }
                         />
                         <span className="text-xs font-medium uppercase text-[var(--color-text-medium)]">
-                          Voucher #{voucher.id}
+                          Código: {voucher.code}
                         </span>
                       </div>
                       <h3
@@ -210,7 +287,7 @@ export default function VouchersPage() {
                             : "text-[var(--color-text-dark)]"
                         }`}
                       >
-                        {voucher.discount}
+                        {voucher.discountLabel}
                       </span>
                     </div>
                     {!voucher.used && (
@@ -218,6 +295,7 @@ export default function VouchersPage() {
                         Usar agora →
                       </span>
                     )}
+                  </div>
                   </div>
                 </Link>
               ))}

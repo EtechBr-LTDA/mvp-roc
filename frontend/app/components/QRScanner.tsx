@@ -131,10 +131,11 @@ export function QRScanner({ onScan, onClose }: QRScannerProps) {
         });
 
         if (shadedRegion) {
-          (shadedRegion as HTMLElement).style.filter = 'none';
-          (shadedRegion as HTMLElement).style.webkitFilter = 'none';
-          (shadedRegion as HTMLElement).style.backdropFilter = 'none';
-          (shadedRegion as HTMLElement).style.webkitBackdropFilter = 'none';
+          const el = shadedRegion as HTMLElement;
+          el.style.filter = 'none';
+          el.style.backdropFilter = 'none';
+          // Remover webkitBackdropFilter usando setProperty para evitar erro TypeScript
+          el.style.setProperty('-webkit-backdrop-filter', 'none');
         }
       };
 
