@@ -20,8 +20,8 @@ if not exist "frontend\node_modules" (
 )
 
 REM Verificar se concurrently está instalado na raiz
-if not exist "node_modules\concurrently" (
-    echo 📦 Instalando concurrently...
+if not exist "node_modules" (
+    echo 📦 Instalando dependências da raiz (concurrently)...
     call npm install
 )
 

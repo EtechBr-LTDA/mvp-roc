@@ -4,23 +4,23 @@
 Write-Host "🚀 Iniciando ROC Passaporte (Backend + Frontend)..." -ForegroundColor Cyan
 
 # Verificar se as dependências estão instaladas
-if (-not (Test-Path "backend/node_modules")) {
+if (-not (Test-Path "backend\node_modules")) {
     Write-Host "📦 Instalando dependências do backend..." -ForegroundColor Yellow
-    Set-Location backend
+    Push-Location backend
     npm install
-    Set-Location ..
+    Pop-Location
 }
 
-if (-not (Test-Path "frontend/node_modules")) {
+if (-not (Test-Path "frontend\node_modules")) {
     Write-Host "📦 Instalando dependências do frontend..." -ForegroundColor Yellow
-    Set-Location frontend
+    Push-Location frontend
     npm install
-    Set-Location ..
+    Pop-Location
 }
 
 # Verificar se concurrently está instalado na raiz
-if (-not (Test-Path "node_modules/concurrently")) {
-    Write-Host "📦 Instalando concurrently..." -ForegroundColor Yellow
+if (-not (Test-Path "node_modules")) {
+    Write-Host "📦 Instalando dependências da raiz (concurrently)..." -ForegroundColor Yellow
     npm install
 }
 
