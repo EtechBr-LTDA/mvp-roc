@@ -17,6 +17,7 @@ import {
   Sparkle
 } from "@phosphor-icons/react";
 import { RestaurantCarousel } from "./components/RestaurantCarousel";
+import { useState } from "react";
 
 // Componente FAQ Item
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -47,8 +48,6 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function Home() {
-  const router = useRouter();
-
   return (
     <div className="min-h-screen bg-[var(--color-bg-light)] font-[var(--font-family-primary)] text-[var(--color-text-dark)] antialiased">
       {/* =========== NAVBAR (CABEÇALHO) - FULL WIDTH =========== */}
