@@ -54,11 +54,15 @@ export class UsersService {
   ) {}
 
   async createUser(input: CreateUserInput): Promise<Profile> {
+    // Normalizar email para minúsculas
+    const normalizedEmail = input.email.toLowerCase().trim();
+
     // Verificar se já existe usuário com mesmo email ou CPF
+    // Usar .eq() com email normalizado (já convertido para minúsculas)
     const { data: existingByEmail } = await this.supabase
       .from("profiles")
       .select("id")
-      .eq("email", input.email)
+      .eq("email", normalizedEmail)
       .single();
 
     if (existingByEmail) {
@@ -82,7 +86,7 @@ export class UsersService {
     // Preparar dados para inserção
     const insertData: Record<string, any> = {
       full_name: input.name,
-      email: input.email,
+      email: normalizedEmail,
       cpf: input.cpf,
       password_hash: passwordHash,
     };
@@ -148,10 +152,13 @@ export class UsersService {
   }
 
   async findByEmail(email: string): Promise<Profile | null> {
+    // Normalizar email para minúsculas para busca case-insensitive
+    const normalizedEmail = email.toLowerCase().trim();
+    
     const { data, error } = await this.supabase
       .from("profiles")
       .select("*")
-      .eq("email", email)
+      .eq("email", normalizedEmail)
       .single();
 
     if (error || !data) {

@@ -272,10 +272,12 @@ export default function RegisterPage() {
 
     try {
       const { apiClient } = await import("@/app/lib/api");
+      // Normalizar email para minúsculas antes de enviar
+      const normalizedEmail = formData.email.toLowerCase().trim();
       await apiClient.register({
         name: formData.name,
         cpf: formData.cpf.replace(/\D/g, ""),
-        email: formData.email,
+        email: normalizedEmail,
         password: formData.password,
         passwordConfirmation: formData.passwordConfirmation,
         address: {

@@ -31,7 +31,9 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await apiClient.login(email, password, rememberMe);
+      // Normalizar email para minúsculas antes de enviar
+      const normalizedEmail = email.toLowerCase().trim();
+      await apiClient.login(normalizedEmail, password, rememberMe);
       window.location.href = "/account/vouchers";
       return;
     } catch (err) {
