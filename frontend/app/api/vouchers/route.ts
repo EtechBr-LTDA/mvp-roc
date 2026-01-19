@@ -31,10 +31,14 @@ export async function GET(request: Request) {
       );
     }
 
-    const vouchers = await response.json();
+    const responseData = await response.json();
+
+    // Suporte para API paginada (responseData.data) e API antiga (array direto)
+    const vouchersArray = responseData.data ?? responseData;
+    const vouchersList = Array.isArray(vouchersArray) ? vouchersArray : [];
 
     return NextResponse.json({
-      vouchers: vouchers.map((v: any) => ({
+      data: vouchersList.map((v: any) => ({
         id: v.id,
         code: v.code,
         restaurantName: v.restaurantName,
@@ -46,6 +50,7 @@ export async function GET(request: Request) {
         status: v.status,
         restaurant: v.restaurant,
       })),
+      pagination: responseData.pagination || null,
     });
   } catch (error: any) {
     console.error("Erro ao listar vouchers:", error);

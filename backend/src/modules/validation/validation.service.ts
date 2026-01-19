@@ -7,6 +7,14 @@ interface ValidateVoucherInput {
   code: string;
 }
 
+// Função para mascarar CPF (ex: 123.456.789-00 -> ***.456.***-**)
+function maskCpf(cpf: string | null): string {
+  if (!cpf) return "***.***.***-**";
+  const cleanCpf = cpf.replace(/\D/g, "");
+  if (cleanCpf.length !== 11) return "***.***.***-**";
+  return `***.${cleanCpf.slice(3, 6)}.***-**`;
+}
+
 @Injectable()
 export class ValidationService {
   constructor(
@@ -53,9 +61,8 @@ export class ValidationService {
         discountLabel: voucher.restaurant.discount_label,
       },
       customer: {
-        id: user.id,
         name: user.full_name,
-        cpf: user.cpf,
+        cpf: maskCpf(user.cpf),
       },
     };
   }
@@ -102,7 +109,7 @@ export class ValidationService {
       customer: voucher.profile
         ? {
             name: voucher.profile.full_name,
-            cpf: voucher.profile.cpf,
+            cpf: maskCpf(voucher.profile.cpf),
           }
         : null,
     };

@@ -1,52 +1,42 @@
 import { Body, Controller, Post, Get, Put, BadRequestException, UseGuards, Request } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { PasswordResetService } from "./password-reset.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { Address } from "../users/users.service";
 import { ConfigService } from "@nestjs/config";
+import {
+  RegisterDto,
+  LoginDto,
+  UpdateProfileDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  ValidateTokenDto,
+} from "./dto";
 
-class AddressDto {
-  cep!: string;
-  street!: string;
-  number!: string;
-  complement?: string;
-  neighborhood!: string;
-  city!: string;
-  state!: string;
-}
+// Função para validar CPF com verificação de dígitos
+function isValidCpf(cpf: string): boolean {
+  const cleanCpf = cpf.replace(/\D/g, "");
+  if (cleanCpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cleanCpf)) return false;
 
-class RegisterDto {
-  name!: string;
-  cpf!: string;
-  email!: string;
-  password!: string;
-  passwordConfirmation!: string;
-  address?: AddressDto;
-}
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCpf.charAt(i)) * (10 - i);
+  }
+  let remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCpf.charAt(9))) return false;
 
-class LoginDto {
-  email!: string;
-  password!: string;
-}
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCpf.charAt(i)) * (11 - i);
+  }
+  remainder = (sum * 10) % 11;
+  if (remainder === 10 || remainder === 11) remainder = 0;
+  if (remainder !== parseInt(cleanCpf.charAt(10))) return false;
 
-class UpdateProfileDto {
-  full_name?: string;
-  phone?: string;
-  address?: AddressDto;
-}
-
-class ForgotPasswordDto {
-  email!: string;
-}
-
-class ResetPasswordDto {
-  token!: string;
-  password!: string;
-  passwordConfirmation!: string;
-}
-
-class ValidateTokenDto {
-  token!: string;
+  return true;
 }
 
 @Controller("auth")
@@ -57,6 +47,8 @@ export class AuthController {
     private readonly configService: ConfigService
   ) {}
 
+  // Rate limit: 5 registros por minuto por IP
+  @Throttle({ short: { limit: 2, ttl: 1000 }, medium: { limit: 5, ttl: 60000 } })
   @Post("register")
   async register(@Body() body: RegisterDto) {
     if (
@@ -69,12 +61,30 @@ export class AuthController {
       throw new BadRequestException("Todos os campos são obrigatórios");
     }
 
+    // Validação de CPF
+    if (!isValidCpf(body.cpf)) {
+      throw new BadRequestException("CPF inválido");
+    }
+
     if (body.password !== body.passwordConfirmation) {
       throw new BadRequestException("As senhas não conferem");
     }
 
-    if (body.password.length < 6) {
-      throw new BadRequestException("A senha deve ter pelo menos 6 caracteres");
+    // Validação de força de senha: mínimo 8 caracteres, 1 maiúscula, 1 minúscula, 1 número
+    if (body.password.length < 8) {
+      throw new BadRequestException("A senha deve ter pelo menos 8 caracteres");
+    }
+
+    if (!/[A-Z]/.test(body.password)) {
+      throw new BadRequestException("A senha deve conter pelo menos uma letra maiúscula");
+    }
+
+    if (!/[a-z]/.test(body.password)) {
+      throw new BadRequestException("A senha deve conter pelo menos uma letra minúscula");
+    }
+
+    if (!/[0-9]/.test(body.password)) {
+      throw new BadRequestException("A senha deve conter pelo menos um número");
     }
 
     // Validar endereço se fornecido
@@ -103,6 +113,8 @@ export class AuthController {
     }
   }
 
+  // Rate limit: 5 tentativas de login por minuto por IP (proteção contra brute force)
+  @Throttle({ short: { limit: 3, ttl: 1000 }, medium: { limit: 5, ttl: 60000 } })
   @Post("login")
   async login(@Body() body: LoginDto) {
     if (!body.email || !body.password) {
@@ -115,6 +127,8 @@ export class AuthController {
     });
   }
 
+  // Rate limit: 3 solicitações de reset por minuto por IP
+  @Throttle({ short: { limit: 1, ttl: 1000 }, medium: { limit: 3, ttl: 60000 } })
   @Post("forgot-password")
   async forgotPassword(@Body() body: ForgotPasswordDto) {
     if (!body.email) {
@@ -126,15 +140,13 @@ export class AuthController {
     // Sempre retorna sucesso para não revelar se o email existe
     if (result) {
       // Aqui você pode integrar com um serviço de email (SendGrid, AWS SES, etc.)
-      // Por enquanto, vamos apenas logar o token para desenvolvimento
       const frontendUrl = this.configService.get<string>("FRONTEND_URL") || "http://localhost:3000";
       const resetUrl = `${frontendUrl}/auth/reset-password?token=${result.token}`;
 
-      console.log("=== RESET PASSWORD ===");
-      console.log(`Usuário: ${result.userName}`);
-      console.log(`Email: ${body.email}`);
-      console.log(`Link de reset: ${resetUrl}`);
-      console.log("======================");
+      // Apenas em desenvolvimento - NUNCA logar dados sensíveis em produção
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[DEV] Reset URL:", resetUrl);
+      }
 
       // TODO: Enviar email com o link de reset
       // await this.emailService.sendPasswordResetEmail(body.email, result.userName, resetUrl);
@@ -159,6 +171,8 @@ export class AuthController {
     };
   }
 
+  // Rate limit: 3 resets por minuto por IP
+  @Throttle({ short: { limit: 1, ttl: 1000 }, medium: { limit: 3, ttl: 60000 } })
   @Post("reset-password")
   async resetPassword(@Body() body: ResetPasswordDto) {
     if (!body.token || !body.password || !body.passwordConfirmation) {
@@ -169,8 +183,13 @@ export class AuthController {
       throw new BadRequestException("As senhas não conferem");
     }
 
-    if (body.password.length < 6) {
-      throw new BadRequestException("A senha deve ter pelo menos 6 caracteres");
+    // Validação de força de senha
+    if (body.password.length < 8) {
+      throw new BadRequestException("A senha deve ter pelo menos 8 caracteres");
+    }
+
+    if (!/[A-Z]/.test(body.password) || !/[a-z]/.test(body.password) || !/[0-9]/.test(body.password)) {
+      throw new BadRequestException("A senha deve conter letras maiúsculas, minúsculas e números");
     }
 
     await this.passwordResetService.resetPassword(body.token, body.password);

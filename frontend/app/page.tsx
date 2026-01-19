@@ -16,7 +16,7 @@ import {
   Users,
   Sparkle
 } from "@phosphor-icons/react";
-import { RestaurantCarousel } from "./components/RestaurantCarousel";
+import RestaurantCarousel from "./components/RestaurantCarousel";
 import { useState } from "react";
 
 // Componente FAQ Item

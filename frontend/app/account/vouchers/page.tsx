@@ -131,17 +131,20 @@ export default function VouchersPage() {
 
       const data = await response.json();
 
-      const normalized: Voucher[] =
-        data.vouchers?.map((voucher: any) => ({
-          id: voucher.id,
-          code: voucher.code,
-          restaurantName: voucher.restaurantName,
-          city: voucher.city,
-          discountLabel: voucher.discountLabel,
-          used: voucher.used,
-          imageUrl: voucher.imageUrl,
-          category: voucher.category || "Gastronomia",
-        })) ?? [];
+      // Suporte para API paginada (data.data) e API antiga (data.vouchers ou array direto)
+      const vouchersArray = data.data ?? data.vouchers ?? data;
+      const normalized: Voucher[] = Array.isArray(vouchersArray)
+        ? vouchersArray.map((voucher: any) => ({
+            id: voucher.id,
+            code: voucher.code,
+            restaurantName: voucher.restaurantName,
+            city: voucher.city,
+            discountLabel: voucher.discountLabel,
+            used: voucher.used,
+            imageUrl: voucher.imageUrl,
+            category: voucher.category || "Gastronomia",
+          }))
+        : [];
 
       setVouchers(normalized);
     } catch (err) {
@@ -194,9 +197,11 @@ export default function VouchersPage() {
                 });
                 if (response.ok) {
                   const data = await response.json();
-                  const updatedVoucherData = data.vouchers?.find(
-                    (v: any) => v.id === updatedVoucher.id
-                  );
+                  // Suporte para API paginada (data.data) e API antiga (data.vouchers)
+                  const vouchersArray = data.data ?? data.vouchers ?? data;
+                  const updatedVoucherData = Array.isArray(vouchersArray)
+                    ? vouchersArray.find((v: any) => v.id === updatedVoucher.id)
+                    : null;
 
                   // Atualizar lista de vouchers
                   await fetchVouchers();

@@ -137,25 +137,53 @@ export class VouchersService {
     return [...(existingVouchers || []), ...(createdVouchers || [])];
   }
 
-  async listForUser(profileId: string): Promise<VoucherWithRestaurant[]> {
-    // Tentar buscar vouchers existentes
+  async listForUser(
+    profileId: string,
+    options?: { page?: number; limit?: number }
+  ): Promise<{ vouchers: VoucherWithRestaurant[]; total: number; page: number; totalPages: number }> {
+    const page = options?.page || 1;
+    const limit = options?.limit || 20;
+    const offset = (page - 1) * limit;
+
+    // Contar total de vouchers
+    const { count: total, error: countError } = await this.supabase
+      .from("vouchers")
+      .select("*", { count: "exact", head: true })
+      .eq("profile_id", profileId);
+
+    if (countError) {
+      throw new Error(`Erro ao contar vouchers: ${countError.message}`);
+    }
+
+    // Se não há vouchers, gerar novos
+    if (!total || total === 0) {
+      const newVouchers = await this.generateVouchersForUser(profileId);
+      return {
+        vouchers: newVouchers as VoucherWithRestaurant[],
+        total: newVouchers.length,
+        page: 1,
+        totalPages: 1,
+      };
+    }
+
+    // Buscar vouchers paginados
     const { data: vouchers, error } = await this.supabase
       .from("vouchers")
       .select("*, restaurant:restaurants(*)")
       .eq("profile_id", profileId)
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       throw new Error(`Erro ao buscar vouchers: ${error.message}`);
     }
 
-    // Se não há vouchers, gerar novos
-    if (!vouchers || vouchers.length === 0) {
-      const newVouchers = await this.generateVouchersForUser(profileId);
-      return newVouchers as VoucherWithRestaurant[];
-    }
-
-    return vouchers as VoucherWithRestaurant[];
+    return {
+      vouchers: (vouchers || []) as VoucherWithRestaurant[],
+      total: total || 0,
+      page,
+      totalPages: Math.ceil((total || 0) / limit),
+    };
   }
 
   async findForUser(profileId: string, voucherId: string): Promise<VoucherWithRestaurant> {

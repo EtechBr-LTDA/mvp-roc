@@ -11,10 +11,16 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly usersService: UsersService,
     configService: ConfigService
   ) {
+    const jwtSecret = configService.get<string>("JWT_SECRET");
+
+    if (!jwtSecret) {
+      throw new Error("JWT_SECRET não está configurado. Configure a variável de ambiente JWT_SECRET.");
+    }
+
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: configService.get<string>("JWT_SECRET") || "fallback-secret-change-in-production",
+      secretOrKey: jwtSecret,
     });
   }
 

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, ForkKnife } from "@phosphor-icons/react";
 
@@ -220,7 +221,7 @@ const restaurants: Restaurant[] = [
 const CARDS_PER_PAGE = 5; // Número de cards por página
 const AUTO_SLIDE_INTERVAL = 4000; // 4 segundos
 
-export function RestaurantCarousel() {
+function RestaurantCarousel() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -283,10 +284,12 @@ export function RestaurantCarousel() {
               >
                 {/* Imagem do Restaurante */}
                 <div className="relative h-48 overflow-hidden">
-                  <img
+                  <Image
                     src={restaurant.image}
                     alt={restaurant.name}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
                   />
                   {/* Badge de Desconto */}
                   <div className="absolute top-3 right-3 rounded-full bg-[var(--color-roc-primary)] px-3 py-1 text-sm font-bold text-[var(--color-white)] shadow-medium">
@@ -385,4 +388,7 @@ export function RestaurantCarousel() {
     </div>
   );
 }
+
+// Exportar com memo para evitar re-renders desnecessários
+export default memo(RestaurantCarousel);
 
