@@ -118,18 +118,54 @@ class ApiClient {
   }
 
   // Gerenciamento de Token e User ID
-  setToken(token: string, userId?: string) {
+  setToken(token: string, userId?: string, userName?: string, userEmail?: string, rememberMe: boolean = false) {
     if (typeof window !== "undefined") {
       localStorage.setItem("auth_token", token);
       if (userId) {
         localStorage.setItem("user_id", userId);
+      }
+      if (userName) {
+        localStorage.setItem("user_name", userName);
+      }
+      if (userEmail) {
+        localStorage.setItem("user_email", userEmail);
+      }
+
+      // Salvar data de expiração se "lembrar de mim" estiver marcado
+      if (rememberMe) {
+        // 30 dias em milissegundos
+        const expirationDate = Date.now() + (30 * 24 * 60 * 60 * 1000);
+        localStorage.setItem("auth_expiration", expirationDate.toString());
+        localStorage.setItem("remember_me", "true");
+      } else {
+        // Sessão expira quando fechar o navegador (não salva expiração)
+        localStorage.removeItem("auth_expiration");
+        localStorage.removeItem("remember_me");
       }
     }
   }
 
   getToken(): string | null {
     if (typeof window === "undefined") return null;
-    return localStorage.getItem("auth_token");
+
+    const token = localStorage.getItem("auth_token");
+    if (!token) return null;
+
+    // Verificar se a sessão expirou
+    const expiration = localStorage.getItem("auth_expiration");
+    const rememberMe = localStorage.getItem("remember_me");
+
+    // Se "lembrar de mim" estava marcado, verificar expiração de 30 dias
+    if (rememberMe === "true" && expiration) {
+      const expirationDate = parseInt(expiration, 10);
+      if (Date.now() > expirationDate) {
+        // Token expirou, limpar auth
+        this.clearAuth();
+        return null;
+      }
+    }
+
+    return token;
   }
 
   getUserId(): string | null {
@@ -137,10 +173,19 @@ class ApiClient {
     return localStorage.getItem("user_id");
   }
 
+  isRemembered(): boolean {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("remember_me") === "true";
+  }
+
   clearAuth() {
     if (typeof window !== "undefined") {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user_id");
+      localStorage.removeItem("user_name");
+      localStorage.removeItem("user_email");
+      localStorage.removeItem("auth_expiration");
+      localStorage.removeItem("remember_me");
     }
   }
 
@@ -149,7 +194,7 @@ class ApiClient {
   }
 
   // Auth endpoints
-  async login(email: string, password: string) {
+  async login(email: string, password: string, rememberMe: boolean = false) {
     const response = await this.request<{
       user: User;
       token: string;
@@ -158,7 +203,13 @@ class ApiClient {
       body: JSON.stringify({ email, password }),
     });
 
-    this.setToken(response.token, response.user.id);
+    this.setToken(
+      response.token,
+      response.user.id,
+      response.user.name || undefined,
+      response.user.email || undefined,
+      rememberMe
+    );
     return response;
   }
 
@@ -168,6 +219,15 @@ class ApiClient {
     email: string;
     password: string;
     passwordConfirmation: string;
+    address?: {
+      cep: string;
+      street: string;
+      number: string;
+      complement?: string;
+      neighborhood: string;
+      city: string;
+      state: string;
+    };
   }) {
     const response = await this.request<{
       user: User;
@@ -177,7 +237,60 @@ class ApiClient {
       body: JSON.stringify(data),
     });
 
-    this.setToken(response.token, response.user.id);
+    this.setToken(response.token, response.user.id, response.user.name || undefined, response.user.email || undefined);
+    return response;
+  }
+
+  // Profile endpoints
+  async getProfile() {
+    return this.request<{
+      id: string;
+      full_name: string;
+      cpf: string;
+      email: string;
+      phone?: string;
+      address?: {
+        cep: string;
+        street: string;
+        number: string;
+        complement?: string;
+        neighborhood: string;
+        city: string;
+        state: string;
+      };
+      created_at: string;
+    }>("/auth/profile", {
+      method: "GET",
+    });
+  }
+
+  async updateProfile(data: {
+    full_name?: string;
+    phone?: string;
+    address?: {
+      cep: string;
+      street: string;
+      number: string;
+      complement?: string;
+      neighborhood: string;
+      city: string;
+      state: string;
+    };
+  }) {
+    const response = await this.request<{
+      id: string;
+      full_name: string;
+      email: string;
+    }>("/auth/profile", {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+
+    // Atualizar nome no localStorage se alterado
+    if (data.full_name && typeof window !== "undefined") {
+      localStorage.setItem("user_name", data.full_name);
+    }
+
     return response;
   }
 

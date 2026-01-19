@@ -31,7 +31,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      await apiClient.login(email, password);
+      await apiClient.login(email, password, rememberMe);
       window.location.href = "/account/vouchers";
       return;
     } catch (err) {

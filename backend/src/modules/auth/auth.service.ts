@@ -1,12 +1,13 @@
 import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
-import { UsersService } from "../users/users.service";
+import { UsersService, Address, UpdateUserInput } from "../users/users.service";
 
 interface RegisterInput {
   name: string;
   cpf: string;
   email: string;
   password: string;
+  address?: Address;
 }
 
 interface LoginInput {
@@ -82,6 +83,16 @@ export class AuthService {
       },
       token,
     };
+  }
+
+  async getProfile(userId: string) {
+    const profile = await this.usersService.findById(userId);
+    return this.usersService.profileToResponse(profile);
+  }
+
+  async updateProfile(userId: string, input: UpdateUserInput) {
+    const profile = await this.usersService.updateUser(userId, input);
+    return this.usersService.profileToResponse(profile);
   }
 
   async validateToken(token: string): Promise<JwtPayload | null> {
