@@ -19,6 +19,8 @@ import {
   Clock,
   ArrowRight,
 } from "@phosphor-icons/react";
+import { supabase } from "@/app/lib/supabase";
+import { apiClient } from "@/app/lib/api";
 
 // Tipos de cozinha disponíveis
 const cuisineTypes = [
@@ -80,69 +82,164 @@ export default function VouchersPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
 
-  useEffect(() => {
-    const fetchVouchers = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
+  // Notificação de validação em tempo real
+  const [notification, setNotification] = useState<{
+    show: boolean;
+    message: string;
+    voucherCode?: string;
+    restaurantName?: string;
+  }>({ show: false, message: "" });
 
-        const token = localStorage.getItem("auth_token");
+  // Função para buscar vouchers (extraída para poder ser reutilizada)
+  const fetchVouchers = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
 
-        if (!token) {
+      const token = localStorage.getItem("auth_token");
+
+      if (!token) {
+        window.location.href = "/auth/login";
+        return;
+      }
+
+      // Buscar nome do usuário do localStorage
+      const userName = localStorage.getItem("user_name");
+      if (userName) {
+        // Extrair apenas o primeiro nome
+        const firstName = userName.split(" ")[0];
+        setUser({ name: firstName });
+      }
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
+
+      const response = await fetch("/api/vouchers", {
+        headers,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
           window.location.href = "/auth/login";
           return;
         }
+        throw new Error(errorData.error || "Erro ao carregar vouchers");
+      }
 
-        // Buscar nome do usuário do localStorage
-        const userName = localStorage.getItem("user_name");
-        if (userName) {
-          // Extrair apenas o primeiro nome
-          const firstName = userName.split(" ")[0];
-          setUser({ name: firstName });
-        }
+      const data = await response.json();
 
-        const headers: Record<string, string> = {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        };
+      const normalized: Voucher[] =
+        data.vouchers?.map((voucher: any) => ({
+          id: voucher.id,
+          code: voucher.code,
+          restaurantName: voucher.restaurantName,
+          city: voucher.city,
+          discountLabel: voucher.discountLabel,
+          used: voucher.used,
+          imageUrl: voucher.imageUrl,
+          category: voucher.category || "Gastronomia",
+        })) ?? [];
 
-        const response = await fetch("/api/vouchers", {
-          headers,
-        });
+      setVouchers(normalized);
+    } catch (err) {
+      console.error(err);
+      setError("Não foi possível carregar seus vouchers. Tente novamente.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          if (response.status === 401) {
-            window.location.href = "/auth/login";
-            return;
+  useEffect(() => {
+    fetchVouchers();
+
+    // Configurar Realtime subscription para notificações em tempo real
+    const userId = apiClient.getUserId();
+    if (!userId || !supabase) {
+      return;
+    }
+
+    // Escutar mudanças na tabela vouchers para este usuário
+    const channel = supabase
+      .channel(`vouchers:${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "vouchers",
+          filter: `profile_id=eq.${userId}`,
+        },
+        async (payload) => {
+          const updatedVoucher = payload.new as any;
+          const oldVoucher = payload.old as any;
+
+          // Verificar se o voucher foi marcado como usado (mudou de available para used)
+          if (
+            updatedVoucher.status === "used" &&
+            oldVoucher.status === "available" &&
+            updatedVoucher.used_at
+          ) {
+            // Buscar informações atualizadas do voucher para a notificação
+            const token = localStorage.getItem("auth_token");
+            if (token) {
+              try {
+                const response = await fetch("/api/vouchers", {
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                });
+                if (response.ok) {
+                  const data = await response.json();
+                  const updatedVoucherData = data.vouchers?.find(
+                    (v: any) => v.id === updatedVoucher.id
+                  );
+
+                  // Atualizar lista de vouchers
+                  await fetchVouchers();
+
+                  // Mostrar notificação
+                  setNotification({
+                    show: true,
+                    message: `Seu voucher foi validado!`,
+                    voucherCode: updatedVoucher.code,
+                    restaurantName:
+                      updatedVoucherData?.restaurantName || "Restaurante",
+                  });
+
+                  // Esconder notificação após 5 segundos
+                  setTimeout(() => {
+                    setNotification({ show: false, message: "" });
+                  }, 5000);
+                }
+              } catch (err) {
+                console.error("Erro ao buscar dados do voucher:", err);
+                // Mesmo assim, atualizar a lista e mostrar notificação básica
+                await fetchVouchers();
+                setNotification({
+                  show: true,
+                  message: `Seu voucher ${updatedVoucher.code} foi validado!`,
+                  voucherCode: updatedVoucher.code,
+                });
+                setTimeout(() => {
+                  setNotification({ show: false, message: "" });
+                }, 5000);
+              }
+            }
           }
-          throw new Error(errorData.error || "Erro ao carregar vouchers");
         }
+      )
+      .subscribe();
 
-        const data = await response.json();
-
-        const normalized: Voucher[] =
-          data.vouchers?.map((voucher: any) => ({
-            id: voucher.id,
-            code: voucher.code,
-            restaurantName: voucher.restaurantName,
-            city: voucher.city,
-            discountLabel: voucher.discountLabel,
-            used: voucher.used,
-            imageUrl: voucher.imageUrl,
-            category: voucher.category || "Gastronomia",
-          })) ?? [];
-
-        setVouchers(normalized);
-      } catch (err) {
-        console.error(err);
-        setError("Não foi possível carregar seus vouchers. Tente novamente.");
-      } finally {
-        setIsLoading(false);
+    // Cleanup
+    return () => {
+      if (supabase) {
+        supabase.removeChannel(channel);
       }
     };
-
-    fetchVouchers();
   }, []);
 
   // Extrair lista de cidades únicas
@@ -207,6 +304,47 @@ export default function VouchersPage() {
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-bg-light)]">
       <Header />
+
+      {/* Notificação de validação em tempo real */}
+      <AnimatePresence>
+        {notification.show && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -50, scale: 0.9 }}
+            transition={{ type: "spring", damping: 20 }}
+            className="fixed top-4 right-4 z-50 max-w-sm rounded-xl bg-gradient-to-r from-[var(--color-roc-success)] to-[var(--color-roc-success)]/90 p-4 shadow-2xl"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0">
+                <CheckCircle size={24} weight="fill" className="text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-white text-sm">
+                  {notification.message}
+                </p>
+                {notification.restaurantName && (
+                  <p className="text-xs text-white/90 mt-1">
+                    {notification.restaurantName}
+                  </p>
+                )}
+                {notification.voucherCode && (
+                  <p className="text-xs text-white/80 mt-1 font-mono">
+                    Código: {notification.voucherCode}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={() => setNotification({ show: false, message: "" })}
+                className="flex-shrink-0 text-white/80 hover:text-white transition-colors"
+                aria-label="Fechar notificação"
+              >
+                <X size={20} weight="bold" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <main className="flex-1 pb-12 pt-24">
         <div className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8">

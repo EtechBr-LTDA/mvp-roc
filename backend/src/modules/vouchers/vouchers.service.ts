@@ -87,10 +87,6 @@ export class VouchersService {
       .select("*, restaurant:restaurants(*)")
       .eq("pass_id", passId);
 
-    if (existingVouchers && existingVouchers.length > 0) {
-      return existingVouchers;
-    }
-
     // Buscar restaurantes ativos
     const { data: restaurants, error: restError } = await this.supabase
       .from("restaurants")
@@ -100,11 +96,27 @@ export class VouchersService {
 
     if (restError || !restaurants || restaurants.length === 0) {
       // Retornar lista vazia se não há restaurantes
-      return [];
+      return existingVouchers || [];
     }
 
-    // Gerar vouchers para cada restaurante
-    const vouchersToInsert = restaurants.map((restaurant) => ({
+    // VALIDAÇÃO: Garantir apenas um voucher por restaurante por usuário
+    // Buscar restaurantes que já têm voucher para este usuário
+    const existingRestaurantIds = new Set(
+      existingVouchers?.map((v) => v.restaurant_id) || []
+    );
+
+    // Filtrar restaurantes que ainda não têm voucher
+    const restaurantsToCreate = restaurants.filter(
+      (r) => !existingRestaurantIds.has(r.id)
+    );
+
+    // Se todos os restaurantes já têm voucher, retornar os existentes
+    if (restaurantsToCreate.length === 0) {
+      return existingVouchers || [];
+    }
+
+    // Gerar vouchers apenas para restaurantes que não têm voucher
+    const vouchersToInsert = restaurantsToCreate.map((restaurant) => ({
       code: this.generateVoucherCode(),
       profile_id: profileId,
       pass_id: passId,
@@ -121,7 +133,8 @@ export class VouchersService {
       throw new Error(`Erro ao gerar vouchers: ${voucherError.message}`);
     }
 
-    return createdVouchers || [];
+    // Retornar todos os vouchers (existentes + novos)
+    return [...(existingVouchers || []), ...(createdVouchers || [])];
   }
 
   async listForUser(profileId: string): Promise<VoucherWithRestaurant[]> {
