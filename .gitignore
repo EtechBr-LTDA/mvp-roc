@@ -51,6 +51,7 @@ next-env.d.ts
 .settings/
 *.sublime-project
 *.sublime-workspace
+.claude/
 
 # OS
 .DS_Store
