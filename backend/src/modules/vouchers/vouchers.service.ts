@@ -179,7 +179,7 @@ export class VouchersService {
     // Buscar vouchers com contagem em uma única query (mais eficiente)
     const { data: vouchers, error, count: total } = await this.supabase
       .from("vouchers")
-      .select("id, code, profile_id, pass_id, restaurant_id, status, used_at, created_at, expires_at, restaurant:restaurants(id, name, city, discount_label, image_url, category)", { count: "exact" })
+      .select("id, code, profile_id, user_id, pass_id, restaurant_id, status, used_at, created_at, expires_at, restaurant:restaurants(id, name, city, discount_label, image_url, category)", { count: "exact" })
       .eq("profile_id", profileId)
       .order("status", { ascending: true }) // available primeiro, depois used
       .order("created_at", { ascending: false })
@@ -200,8 +200,14 @@ export class VouchersService {
       };
     }
 
+    // Normalizar restaurant de array para objeto (Supabase retorna array em joins específicos)
+    const normalizedVouchers = (vouchers || []).map((v: any) => ({
+      ...v,
+      restaurant: Array.isArray(v.restaurant) ? v.restaurant[0] : v.restaurant,
+    }));
+
     return {
-      vouchers: (vouchers || []) as VoucherWithRestaurant[],
+      vouchers: normalizedVouchers as VoucherWithRestaurant[],
       total: total || 0,
       page,
       totalPages: Math.ceil((total || 0) / limit),

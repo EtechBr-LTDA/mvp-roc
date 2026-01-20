@@ -228,7 +228,7 @@ export function Footer() {
               direitos reservados.
             </p>
             <a
-              href="https://etechbr.com.br"
+              href="https://etechbr.com"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 text-xs text-[var(--color-text-medium)] hover:text-[var(--color-roc-primary)] transition-colors"

@@ -92,7 +92,7 @@ export function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b border-[var(--color-border)] bg-[var(--color-white)] shadow-soft">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-[var(--spacing-4)]">
-        <Link href="/" className="text-xl font-bold tracking-tight">
+        <Link href="/account/vouchers" className="text-xl font-bold tracking-tight">
           <span className="text-[var(--color-roc-primary)]">ROC</span> Passaporte
         </Link>
 
