@@ -49,6 +49,33 @@ export class VouchersService {
     return code;
   }
 
+  // Gerar código único verificando no banco
+  private async generateUniqueVoucherCode(): Promise<string> {
+    let attempts = 0;
+    const maxAttempts = 10;
+
+    while (attempts < maxAttempts) {
+      const code = this.generateVoucherCode();
+
+      // Verificar se código já existe
+      const { data: existing } = await this.supabase
+        .from("vouchers")
+        .select("id")
+        .eq("code", code)
+        .single();
+
+      if (!existing) {
+        return code; // Código único encontrado
+      }
+
+      attempts++;
+    }
+
+    // Fallback: adicionar timestamp para garantir unicidade
+    const timestamp = Date.now().toString(36).toUpperCase().slice(-4);
+    return `ROC-${timestamp}${Math.random().toString(36).substring(2, 3).toUpperCase()}`;
+  }
+
   async generateVouchersForUser(profileId: string): Promise<Voucher[]> {
     // Verificar se já existe pass para este profile
     const { data: existingPass } = await this.supabase
@@ -81,11 +108,12 @@ export class VouchersService {
       passId = existingPass.id;
     }
 
-    // Verificar se já existem vouchers para este pass
+    // Verificar TODOS os vouchers do usuário (por profile_id, não apenas pass_id)
+    // Isso evita duplicação mesmo se houver múltiplos passes
     const { data: existingVouchers } = await this.supabase
       .from("vouchers")
       .select("*, restaurant:restaurants(*)")
-      .eq("pass_id", passId);
+      .eq("profile_id", profileId);
 
     // Buscar restaurantes ativos
     const { data: restaurants, error: restError } = await this.supabase
@@ -100,12 +128,12 @@ export class VouchersService {
     }
 
     // VALIDAÇÃO: Garantir apenas um voucher por restaurante por usuário
-    // Buscar restaurantes que já têm voucher para este usuário
+    // Buscar restaurantes que já têm voucher para este usuário (verificando por profile_id)
     const existingRestaurantIds = new Set(
       existingVouchers?.map((v) => v.restaurant_id) || []
     );
 
-    // Filtrar restaurantes que ainda não têm voucher
+    // Filtrar restaurantes que ainda não têm voucher para este usuário
     const restaurantsToCreate = restaurants.filter(
       (r) => !existingRestaurantIds.has(r.id)
     );
@@ -116,13 +144,16 @@ export class VouchersService {
     }
 
     // Gerar vouchers apenas para restaurantes que não têm voucher
-    const vouchersToInsert = restaurantsToCreate.map((restaurant) => ({
-      code: this.generateVoucherCode(),
-      profile_id: profileId,
-      pass_id: passId,
-      restaurant_id: restaurant.id,
-      status: "available" as const,
-    }));
+    // Usar códigos únicos para evitar colisões
+    const vouchersToInsert = await Promise.all(
+      restaurantsToCreate.map(async (restaurant) => ({
+        code: await this.generateUniqueVoucherCode(),
+        profile_id: profileId,
+        pass_id: passId,
+        restaurant_id: restaurant.id,
+        status: "available" as const,
+      }))
+    );
 
     const { data: createdVouchers, error: voucherError } = await this.supabase
       .from("vouchers")
@@ -219,17 +250,27 @@ export class VouchersService {
     // Normalizar código para uppercase
     const normalizedCode = code.toUpperCase().trim();
 
-    const { data: voucher, error } = await this.supabase
+    // Buscar todos os vouchers com este código para detectar duplicatas
+    const { data: vouchers, error } = await this.supabase
       .from("vouchers")
       .select("*, restaurant:restaurants(*), profile:profiles(full_name, cpf)")
-      .eq("code", normalizedCode)
-      .single();
+      .eq("code", normalizedCode);
 
-    if (error || !voucher) {
+    if (error || !vouchers || vouchers.length === 0) {
       return null;
     }
 
-    return voucher as VoucherWithRestaurant & { profile?: { full_name: string; cpf: string } };
+    // Se houver mais de um voucher com o mesmo código, é um problema
+    if (vouchers.length > 1) {
+      console.error(`[ALERTA] Código duplicado encontrado: ${normalizedCode}. Total: ${vouchers.length} vouchers.`);
+      // Retornar o primeiro que não foi usado, ou o primeiro disponível
+      const availableVoucher = vouchers.find(v => v.status === "available");
+      if (availableVoucher) {
+        return availableVoucher as VoucherWithRestaurant & { profile?: { full_name: string; cpf: string } };
+      }
+    }
+
+    return vouchers[0] as VoucherWithRestaurant & { profile?: { full_name: string; cpf: string } };
   }
 
   async useVoucher(profileId: string, voucherId: string): Promise<VoucherWithRestaurant> {
