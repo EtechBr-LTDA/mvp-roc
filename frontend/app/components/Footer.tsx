@@ -88,7 +88,7 @@ export function Footer() {
               </li>
               <li>
                 <Link
-                  href="/restaurants"
+                  href="/account/vouchers"
                   className="text-sm text-[var(--color-text-medium)] transition-colors hover:text-[var(--color-roc-primary)]"
                 >
                   Restaurantes Parceiros
@@ -113,31 +113,31 @@ export function Footer() {
             <ul className="space-y-3">
               <li>
                 <Link
-                  href="/faq"
+                  href="/account/support"
                   className="text-sm text-[var(--color-text-medium)] transition-colors hover:text-[var(--color-roc-primary)]"
                 >
                   Perguntas Frequentes
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/terms"
+                <a
+                  href="#"
                   className="text-sm text-[var(--color-text-medium)] transition-colors hover:text-[var(--color-roc-primary)]"
                 >
                   Termos de Uso
-                </Link>
+                </a>
               </li>
               <li>
-                <Link
-                  href="/privacy"
+                <a
+                  href="#"
                   className="text-sm text-[var(--color-text-medium)] transition-colors hover:text-[var(--color-roc-primary)]"
                 >
                   Política de Privacidade
-                </Link>
+                </a>
               </li>
               <li>
                 <Link
-                  href="/contact"
+                  href="/account/support"
                   className="text-sm text-[var(--color-text-medium)] transition-colors hover:text-[var(--color-roc-primary)]"
                 >
                   Fale Conosco
