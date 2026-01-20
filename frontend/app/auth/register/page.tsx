@@ -122,9 +122,14 @@ export default function RegisterPage() {
     return numbers.length === 11;
   };
 
-  // Validação de senha
+  // Validação de senha (8+ caracteres, maiúscula, minúscula, número)
   const validatePassword = (password: string): boolean => {
-    return password.length >= 6;
+    return (
+      password.length >= 8 &&
+      /[A-Z]/.test(password) &&
+      /[a-z]/.test(password) &&
+      /[0-9]/.test(password)
+    );
   };
 
   // Buscar endereço pelo CEP (ViaCEP)
@@ -207,7 +212,7 @@ export default function RegisterPage() {
       if (!formData.password) {
         newErrors.password = "Senha é obrigatória";
       } else if (!validatePassword(formData.password)) {
-        newErrors.password = "Senha deve ter no mínimo 6 caracteres";
+        newErrors.password = "A senha não atende aos requisitos mínimos";
       }
       if (!formData.passwordConfirmation) {
         newErrors.passwordConfirmation = "Confirmação de senha é obrigatória";
@@ -303,7 +308,21 @@ export default function RegisterPage() {
             ? error.error
             : error.error.message || errorMessage;
       }
-      setErrors({ submit: errorMessage });
+
+      // Mapear erros do backend para campos específicos
+      const lowerError = errorMessage.toLowerCase();
+      if (lowerError.includes("cpf")) {
+        setErrors({ cpf: errorMessage });
+        setCurrentStep(1);
+      } else if (lowerError.includes("e-mail") || lowerError.includes("email")) {
+        setErrors({ email: errorMessage });
+        setCurrentStep(1);
+      } else if (lowerError.includes("senha") || lowerError.includes("password")) {
+        setErrors({ password: errorMessage });
+        setCurrentStep(2);
+      } else {
+        setErrors({ submit: errorMessage });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -662,11 +681,35 @@ export default function RegisterPage() {
                             ? "border-[var(--color-roc-danger)] focus:ring-2 focus:ring-[var(--color-roc-danger)]/20"
                             : "border-[var(--color-border)] focus:border-[var(--color-roc-primary)] focus:ring-2 focus:ring-[var(--color-roc-primary)]/20"
                         }`}
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder="Crie uma senha segura"
                       />
                       {errors.password && (
                         <p className="text-xs text-[var(--color-roc-danger)]">{errors.password}</p>
                       )}
+                      {/* Requisitos da senha */}
+                      <div className="mt-2 space-y-1 rounded-lg bg-[var(--color-bg-light)] p-3">
+                        <p className="text-xs font-medium text-[var(--color-text-dark)] mb-2">
+                          A senha deve conter:
+                        </p>
+                        <div className="grid grid-cols-2 gap-1">
+                          <div className={`flex items-center gap-1.5 text-xs ${formData.password.length >= 8 ? 'text-[var(--color-roc-success)]' : 'text-[var(--color-text-medium)]'}`}>
+                            <Check size={12} weight="bold" className={formData.password.length >= 8 ? '' : 'opacity-30'} />
+                            Mínimo 8 caracteres
+                          </div>
+                          <div className={`flex items-center gap-1.5 text-xs ${/[A-Z]/.test(formData.password) ? 'text-[var(--color-roc-success)]' : 'text-[var(--color-text-medium)]'}`}>
+                            <Check size={12} weight="bold" className={/[A-Z]/.test(formData.password) ? '' : 'opacity-30'} />
+                            Letra maiúscula
+                          </div>
+                          <div className={`flex items-center gap-1.5 text-xs ${/[a-z]/.test(formData.password) ? 'text-[var(--color-roc-success)]' : 'text-[var(--color-text-medium)]'}`}>
+                            <Check size={12} weight="bold" className={/[a-z]/.test(formData.password) ? '' : 'opacity-30'} />
+                            Letra minúscula
+                          </div>
+                          <div className={`flex items-center gap-1.5 text-xs ${/[0-9]/.test(formData.password) ? 'text-[var(--color-roc-success)]' : 'text-[var(--color-text-medium)]'}`}>
+                            <Check size={12} weight="bold" className={/[0-9]/.test(formData.password) ? '' : 'opacity-30'} />
+                            Número
+                          </div>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Confirmação de senha */}

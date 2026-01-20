@@ -57,27 +57,24 @@ export class UsersService {
     // Normalizar email para minúsculas
     const normalizedEmail = input.email.toLowerCase().trim();
 
-    // Verificar se já existe usuário com mesmo email ou CPF
-    // Usar .eq() com email normalizado (já convertido para minúsculas)
-    const { data: existingByEmail } = await this.supabase
-      .from("profiles")
-      .select("id")
-      .eq("email", normalizedEmail)
-      .single();
+    // Validações de unicidade desabilitadas temporariamente
+    // const { data: existingByEmail } = await this.supabase
+    //   .from("profiles")
+    //   .select("id")
+    //   .eq("email", normalizedEmail)
+    //   .single();
+    // if (existingByEmail) {
+    //   throw new ConflictException("Usuário com este e-mail já existe");
+    // }
 
-    if (existingByEmail) {
-      throw new ConflictException("Usuário com este e-mail já existe");
-    }
-
-    const { data: existingByCpf } = await this.supabase
-      .from("profiles")
-      .select("id")
-      .eq("cpf", input.cpf)
-      .single();
-
-    if (existingByCpf) {
-      throw new ConflictException("Usuário com este CPF já existe");
-    }
+    // const { data: existingByCpf } = await this.supabase
+    //   .from("profiles")
+    //   .select("id")
+    //   .eq("cpf", input.cpf)
+    //   .single();
+    // if (existingByCpf) {
+    //   throw new ConflictException("Usuário com este CPF já existe");
+    // }
 
     // Hash da senha com bcrypt
     const saltRounds = 10;
