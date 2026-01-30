@@ -1,0 +1,9 @@
+{
+  "/dashboard/audit-logs/page": "app/dashboard/audit-logs/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/restaurants/[id]/edit/page": "app/dashboard/restaurants/[id]/edit/page.js",
+  "/dashboard/restaurants/page": "app/dashboard/restaurants/page.js",
+  "/dashboard/users/[id]/page": "app/dashboard/users/[id]/page.js",
+  "/dashboard/users/page": "app/dashboard/users/page.js",
+  "/dashboard/vouchers/page": "app/dashboard/vouchers/page.js"
+}

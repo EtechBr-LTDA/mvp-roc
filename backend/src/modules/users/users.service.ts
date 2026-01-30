@@ -31,6 +31,8 @@ export interface Profile {
   created_at: string;
   updated_at: string;
   password_hash?: string;
+  role: string;
+  suspended_at: string | null;
 }
 
 export interface CreateUserInput {

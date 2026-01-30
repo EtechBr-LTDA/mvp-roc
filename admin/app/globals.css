@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #1e293b;
+
+  /* Cores ROC */
+  --color-roc-primary: #0056b3;
+  --color-roc-primary-light: #337ab7;
+  --color-roc-primary-dark: #003d80;
+  --color-roc-accent: #ffd700;
+  --color-roc-success: #16a34a;
+  --color-roc-danger: #dc2626;
+  --color-roc-warning: #f59e0b;
+
+  /* Cores Neutras */
+  --color-white: #ffffff;
+  --color-text-dark: #1e293b;
+  --color-text-medium: #64748b;
+  --color-text-light: #94a3b8;
+  --color-bg-light: #f8fafc;
+  --color-bg-card: #ffffff;
+  --color-border: #e2e8f0;
+
+  /* Admin */
+  --color-admin-sidebar: #0f172a;
+  --color-admin-sidebar-hover: #1e293b;
+  --color-admin-sidebar-active: #0056b3;
+  --color-admin-bg: #f1f5f9;
+
+  /* Tipografia */
+  --font-family-primary: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+.shadow-soft {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.shadow-medium {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+body {
+  background: var(--color-admin-bg);
+  color: var(--color-text-dark);
+  font-family: var(--font-family-primary);
+}
+
+/* Scrollbar minimalista */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-light);
+}

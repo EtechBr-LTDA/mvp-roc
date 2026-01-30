@@ -20,9 +20,12 @@ async function bootstrap() {
     })
   );
 
-  // Habilitar CORS para permitir requisições do frontend
+  // Habilitar CORS para frontend e admin
   app.enableCors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: [
+      process.env.FRONTEND_URL || "http://localhost:3000",
+      process.env.ADMIN_URL || "http://localhost:3002",
+    ],
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization", "x-user-id"],

@@ -6,10 +6,10 @@ import { LoggerModule } from "nestjs-pino";
 import { DatabaseModule } from "./database/database.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { UsersModule } from "./modules/users/users.module";
-import { CampaignsModule } from "./modules/campaigns/campaigns.module";
 import { RestaurantsModule } from "./modules/restaurants/restaurants.module";
 import { VouchersModule } from "./modules/vouchers/vouchers.module";
 import { ValidationModule } from "./modules/validation/validation.module";
+import { AdminModule } from "./modules/admin/admin.module";
 
 @Module({
   imports: [
@@ -49,10 +49,10 @@ import { ValidationModule } from "./modules/validation/validation.module";
     DatabaseModule,
     AuthModule,
     UsersModule,
-    CampaignsModule,
     RestaurantsModule,
     VouchersModule,
     ValidationModule,
+    AdminModule,
   ],
   providers: [
     {

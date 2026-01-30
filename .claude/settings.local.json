@@ -5,7 +5,8 @@
       "Bash(curl:*)",
       "Bash(npx tsc:*)",
       "Bash(dir \"c:\\\\Prom\\\\mvp-roc\\\\backend\" /b)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(npx next build)"
     ]
   }
 }

@@ -19,6 +19,7 @@ export interface JwtPayload {
   sub: string; // profile id
   email: string;
   name: string;
+  role: string;
 }
 
 @Injectable()
@@ -35,6 +36,7 @@ export class AuthService {
       sub: profile.id,
       email: profile.email || "",
       name: profile.full_name || "",
+      role: profile.role || "user",
     };
 
     const token = this.jwtService.sign(payload);
@@ -45,6 +47,7 @@ export class AuthService {
         name: profile.full_name,
         cpf: profile.cpf,
         email: profile.email,
+        role: profile.role || "user",
       },
       token,
     };
@@ -55,6 +58,11 @@ export class AuthService {
 
     if (!profile || !profile.password_hash) {
       throw new UnauthorizedException("Credenciais inválidas");
+    }
+
+    // Bloquear usuarios suspensos
+    if (profile.suspended_at) {
+      throw new UnauthorizedException("Conta suspensa. Entre em contato com o suporte.");
     }
 
     const isPasswordValid = await this.usersService.validatePassword(
@@ -70,6 +78,7 @@ export class AuthService {
       sub: profile.id,
       email: profile.email || "",
       name: profile.full_name || "",
+      role: profile.role || "user",
     };
 
     const token = this.jwtService.sign(payload);
@@ -80,6 +89,7 @@ export class AuthService {
         name: profile.full_name,
         cpf: profile.cpf,
         email: profile.email,
+        role: profile.role || "user",
       },
       token,
     };
