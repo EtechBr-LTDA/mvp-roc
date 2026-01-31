@@ -9,6 +9,7 @@ import {
   ForkKnife,
   Ticket,
   ClockCounterClockwise,
+  MapPin,
   List,
   X,
 } from "@phosphor-icons/react";
@@ -29,6 +30,11 @@ const navItems: NavItem[] = [
     label: "Usuarios",
     href: "/dashboard/users",
     icon: <Users size={20} />,
+  },
+  {
+    label: "Geo",
+    href: "/dashboard/geo-distribution",
+    icon: <MapPin size={20} />,
   },
   {
     label: "Restaurantes",

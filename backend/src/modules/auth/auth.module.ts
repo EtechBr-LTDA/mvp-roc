@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { UsersModule } from "../users/users.module";
+import { GeolocationModule } from "../geolocation/geolocation.module";
 import { AuthService } from "./auth.service";
 import { PasswordResetService } from "./password-reset.service";
 import { AuthController } from "./auth.controller";
@@ -11,6 +12,7 @@ import { JwtStrategy } from "./jwt.strategy";
 @Module({
   imports: [
     UsersModule,
+    GeolocationModule,
     ConfigModule,
     PassportModule.register({ defaultStrategy: "jwt" }),
     JwtModule.registerAsync({

@@ -8,6 +8,7 @@ import { adminApi } from "../lib/api";
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
   "/dashboard/users": "Usuarios",
+  "/dashboard/geo-distribution": "Distribuicao Geografica",
   "/dashboard/restaurants": "Restaurantes",
   "/dashboard/vouchers": "Vouchers",
   "/dashboard/audit-logs": "Audit Logs",

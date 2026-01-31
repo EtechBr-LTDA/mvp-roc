@@ -5,6 +5,7 @@ import { PasswordResetService } from "./password-reset.service";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 import { Address } from "../users/users.service";
 import { ConfigService } from "@nestjs/config";
+import { GeolocationService } from "../geolocation/geolocation.service";
 import {
   RegisterDto,
   LoginDto,
@@ -44,7 +45,8 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly passwordResetService: PasswordResetService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly geolocationService: GeolocationService,
   ) {}
 
   // Rate limit: 5 registros por minuto por IP
@@ -116,15 +118,23 @@ export class AuthController {
   // Rate limit: 5 tentativas de login por minuto por IP (proteção contra brute force)
   @Throttle({ short: { limit: 3, ttl: 1000 }, medium: { limit: 5, ttl: 60000 } })
   @Post("login")
-  async login(@Body() body: LoginDto) {
+  async login(@Body() body: LoginDto, @Request() req: any) {
     if (!body.email || !body.password) {
       throw new BadRequestException("E-mail e senha são obrigatórios");
     }
 
-    return this.authService.login({
+    const result = await this.authService.login({
       email: body.email,
       password: body.password,
     });
+
+    // Fire-and-forget: registrar evento de geolocalizacao
+    const clientIp = req.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip;
+    if (clientIp && result.user?.id) {
+      this.geolocationService.trackLoginEvent(result.user.id, clientIp).catch(() => {});
+    }
+
+    return result;
   }
 
   // Rate limit: 3 solicitações de reset por minuto por IP

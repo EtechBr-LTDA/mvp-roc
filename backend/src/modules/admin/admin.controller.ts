@@ -9,8 +9,10 @@ import {
   Body,
   UseGuards,
   BadRequestException,
+  Request,
 } from "@nestjs/common";
 import { AdminService } from "./admin.service";
+import { GeolocationService } from "../geolocation/geolocation.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { AdminGuard } from "../auth/admin.guard";
 import { Roles } from "../auth/roles.decorator";
@@ -20,7 +22,10 @@ import { CurrentUser, CurrentUserData } from "../auth/current-user.decorator";
 @UseGuards(JwtAuthGuard, AdminGuard)
 @Roles("admin", "super_admin")
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
+  constructor(
+    private readonly adminService: AdminService,
+    private readonly geolocationService: GeolocationService,
+  ) {}
 
   // ==================== DASHBOARD ====================
 
@@ -157,6 +162,33 @@ export class AdminController {
       throw new BadRequestException("ID invalido");
     }
     return this.adminService.manualValidateVoucher(id, admin.id);
+  }
+
+  // ==================== GEO STATS ====================
+
+  @Get("geo-stats")
+  async getGeoStats(@Query("days") days?: string) {
+    const d = days ? parseInt(days, 10) : 30;
+    return this.geolocationService.getStatsByCity(d);
+  }
+
+  @Get("geo-stats/events")
+  async getGeoEvents(@Query("limit") limit?: string) {
+    const l = limit ? Math.min(parseInt(limit, 10), 100) : 50;
+    return this.geolocationService.getRecentEvents(l);
+  }
+
+  @Post("geo-stats/track")
+  async trackGeoIp(
+    @Request() req: any,
+    @CurrentUser() admin: CurrentUserData,
+  ) {
+    const clientIp =
+      req.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip;
+    if (clientIp && admin.id) {
+      await this.geolocationService.trackLoginEvent(admin.id, clientIp);
+    }
+    return { message: "Geo tracking realizado", ip: clientIp };
   }
 
   // ==================== AUDIT LOGS ====================

@@ -10,6 +10,7 @@ import { RestaurantsModule } from "./modules/restaurants/restaurants.module";
 import { VouchersModule } from "./modules/vouchers/vouchers.module";
 import { ValidationModule } from "./modules/validation/validation.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { GeolocationModule } from "./modules/geolocation/geolocation.module";
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { AdminModule } from "./modules/admin/admin.module";
     VouchersModule,
     ValidationModule,
     AdminModule,
+    GeolocationModule,
   ],
   providers: [
     {

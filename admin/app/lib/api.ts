@@ -172,6 +172,26 @@ class AdminApiClient {
     return this.request<any>(`/admin/vouchers/${id}/validate`, { method: "POST" });
   }
 
+  // Geo Stats
+  async getGeoStats(days: number = 30) {
+    return this.request<{
+      cities: { city: string; count: number }[];
+      otherStates: { state: string; state_name: string; count: number }[];
+      otherStatesTotal: number;
+      total: number;
+    }>(`/admin/geo-stats?days=${days}`);
+  }
+
+  async getGeoEvents(limit: number = 50) {
+    return this.request<any[]>(`/admin/geo-stats/events?limit=${limit}`);
+  }
+
+  async trackGeoIp() {
+    return this.request<{ message: string; ip: string }>("/admin/geo-stats/track", {
+      method: "POST",
+    });
+  }
+
   // Audit Logs
   async getAuditLogs(params?: { page?: number; limit?: number; action?: string; admin_id?: string }) {
     const query = new URLSearchParams();
