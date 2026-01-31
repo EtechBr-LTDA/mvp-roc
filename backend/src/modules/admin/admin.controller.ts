@@ -183,8 +183,10 @@ export class AdminController {
     @Request() req: any,
     @CurrentUser() admin: CurrentUserData,
   ) {
-    const clientIp =
-      req.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip;
+    const forwarded = req.headers?.["x-forwarded-for"];
+    const rawIp = forwarded ? forwarded.split(",")[0].trim() : req.ip;
+    const clientIp = (rawIp || "").replace(/^::ffff:/, "");
+    console.log(`[ADMIN] Geo track: adminId=${admin.id}, ip=${clientIp}`);
     if (clientIp && admin.id) {
       await this.geolocationService.trackLoginEvent(admin.id, clientIp);
     }

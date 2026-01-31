@@ -49,10 +49,17 @@ export class AuthController {
     private readonly geolocationService: GeolocationService,
   ) {}
 
+  private extractClientIp(req: any): string {
+    const forwarded = req.headers?.["x-forwarded-for"];
+    const ip = forwarded ? forwarded.split(",")[0].trim() : req.ip;
+    // Remove ::ffff: prefix (IPv4-mapped IPv6)
+    return (ip || "").replace(/^::ffff:/, "");
+  }
+
   // Rate limit: 5 registros por minuto por IP
   @Throttle({ short: { limit: 2, ttl: 1000 }, medium: { limit: 5, ttl: 60000 } })
   @Post("register")
-  async register(@Body() body: RegisterDto) {
+  async register(@Body() body: RegisterDto, @Request() req: any) {
     if (
       !body.name ||
       !body.cpf ||
@@ -100,13 +107,24 @@ export class AuthController {
     }
 
     try {
-      return await this.authService.register({
+      const result = await this.authService.register({
         name: body.name,
         cpf: body.cpf,
         email: body.email,
         password: body.password,
         address,
       });
+
+      // Fire-and-forget: registrar evento de geolocalizacao no registro
+      const clientIp = this.extractClientIp(req);
+      console.log(`[AUTH] Register geo tracking: userId=${result.user?.id}, ip=${clientIp}`);
+      if (clientIp && result.user?.id) {
+        this.geolocationService.trackLoginEvent(result.user.id, clientIp).catch((err) => {
+          console.error("[AUTH] Erro geo tracking (register):", err?.message || err);
+        });
+      }
+
+      return result;
     } catch (error: any) {
       if (error.status) {
         throw error;
@@ -129,9 +147,12 @@ export class AuthController {
     });
 
     // Fire-and-forget: registrar evento de geolocalizacao
-    const clientIp = req.headers?.["x-forwarded-for"]?.split(",")[0]?.trim() || req.ip;
+    const clientIp = this.extractClientIp(req);
+    console.log(`[AUTH] Login geo tracking: userId=${result.user?.id}, ip=${clientIp}`);
     if (clientIp && result.user?.id) {
-      this.geolocationService.trackLoginEvent(result.user.id, clientIp).catch(() => {});
+      this.geolocationService.trackLoginEvent(result.user.id, clientIp).catch((err) => {
+        console.error("[AUTH] Erro geo tracking (login):", err?.message || err);
+      });
     }
 
     return result;

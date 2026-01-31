@@ -39,7 +39,9 @@ export class GeolocationService {
   /**
    * Resolve IP para localizacao. Usa cache, so chama IPWHOIS.IO se IP novo.
    */
-  async resolveIp(ip: string): Promise<GeoData | null> {
+  async resolveIp(rawIp: string): Promise<GeoData | null> {
+    const ip = this.cleanIp(rawIp);
+
     // Verificar cache
     const { data: cached } = await this.supabase
       .from("ip_geo_cache")
@@ -86,13 +88,24 @@ export class GeolocationService {
   }
 
   /**
-   * Registra evento de login com dados geo. Fire-and-forget.
+   * Limpa IP removendo prefixo ::ffff: (IPv4-mapped IPv6).
    */
-  async trackLoginEvent(profileId: string, ip: string): Promise<void> {
+  private cleanIp(ip: string): string {
+    return ip.replace(/^::ffff:/, "");
+  }
+
+  /**
+   * Registra evento de geolocalizacao.
+   */
+  async trackLoginEvent(profileId: string, rawIp: string): Promise<void> {
+    const ip = this.cleanIp(rawIp);
+    console.log(`[GEO] trackLoginEvent: profileId=${profileId}, ip=${ip}`);
+
     try {
       const geo = await this.resolveIp(ip);
+      console.log(`[GEO] resolveIp result:`, geo ? `${geo.city}, ${geo.state}` : "null (IP privado ou erro)");
 
-      await this.supabase.from("user_geo_events").insert({
+      const { error: insertError } = await this.supabase.from("user_geo_events").insert({
         profile_id: profileId,
         ip,
         state: geo?.state || null,
@@ -100,8 +113,14 @@ export class GeolocationService {
         city: geo?.city || null,
         event_type: "login",
       });
+
+      if (insertError) {
+        console.error("[GEO] Erro ao inserir user_geo_events:", insertError.message, insertError);
+      } else {
+        console.log(`[GEO] Evento registrado com sucesso para ${profileId}`);
+      }
     } catch (error: any) {
-      console.error("Erro ao registrar evento geo:", error?.message);
+      console.error("[GEO] Erro inesperado em trackLoginEvent:", error?.message);
     }
   }
 
