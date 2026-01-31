@@ -73,6 +73,14 @@ frontend/.env
 frontend/.env.local
 frontend/.env.*.local
 
+# Admin Next.js
+admin/.next/
+admin/out/
+admin/node_modules/
+admin/.env
+admin/.env.local
+admin/.env.*.local
+
 # Logs
 logs
 *.log

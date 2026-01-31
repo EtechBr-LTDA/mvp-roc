@@ -169,7 +169,7 @@ export function DataTable<T extends Record<string, any>>({
               disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
             <CaretLeft size={16} />
-            Previous
+            Anterior
           </button>
 
           <span className="text-sm text-[var(--color-text-medium)]">
@@ -190,7 +190,7 @@ export function DataTable<T extends Record<string, any>>({
               text-[var(--color-text-medium)] hover:bg-slate-100 transition-colors
               disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
           >
-            Next
+            Proximo
             <CaretRight size={16} />
           </button>
         </div>

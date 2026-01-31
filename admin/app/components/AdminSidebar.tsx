@@ -9,7 +9,6 @@ import {
   ForkKnife,
   Ticket,
   ClockCounterClockwise,
-  ArrowSquareOut,
   List,
   X,
 } from "@phosphor-icons/react";
@@ -24,27 +23,27 @@ const navItems: NavItem[] = [
   {
     label: "Dashboard",
     href: "/dashboard",
-    icon: <ChartBar size={22} />,
+    icon: <ChartBar size={20} />,
   },
   {
     label: "Usuarios",
     href: "/dashboard/users",
-    icon: <Users size={22} />,
+    icon: <Users size={20} />,
   },
   {
     label: "Restaurantes",
     href: "/dashboard/restaurants",
-    icon: <ForkKnife size={22} />,
+    icon: <ForkKnife size={20} />,
   },
   {
     label: "Vouchers",
     href: "/dashboard/vouchers",
-    icon: <Ticket size={22} />,
+    icon: <Ticket size={20} />,
   },
   {
     label: "Audit Logs",
     href: "/dashboard/audit-logs",
-    icon: <ClockCounterClockwise size={22} />,
+    icon: <ClockCounterClockwise size={20} />,
   },
 ];
 
@@ -53,26 +52,32 @@ export function AdminSidebar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isActive = (href: string) => {
-    if (href === "/dashboard") {
-      return pathname === "/dashboard";
-    }
+    if (href === "/dashboard") return pathname === "/dashboard";
     return pathname.startsWith(href);
   };
 
   const sidebarContent = (
     <>
       {/* Logo */}
-      <div className="flex items-center gap-3 px-6 py-6 border-b border-white/10">
+      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
         <div className="w-9 h-9 rounded-lg bg-[var(--color-roc-primary)] flex items-center justify-center">
           <span className="text-white font-bold text-sm">R</span>
         </div>
-        <span className="text-white text-lg font-semibold tracking-tight">
-          ROC Admin
-        </span>
+        <div className="flex flex-col">
+          <span className="text-white text-base font-semibold tracking-tight leading-tight">
+            ROC Admin
+          </span>
+          <span className="text-slate-500 text-[10px] font-medium uppercase tracking-wider">
+            Painel
+          </span>
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+          Menu
+        </p>
         {navItems.map((item) => {
           const active = isActive(item.href);
           return (
@@ -82,15 +87,15 @@ export function AdminSidebar() {
               onClick={() => setMobileOpen(false)}
               className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-                transition-colors duration-150
+                transition-all duration-150
                 ${
                   active
-                    ? "bg-[var(--color-admin-sidebar-active)] text-white"
-                    : "text-slate-300 hover:bg-[var(--color-admin-sidebar-hover)] hover:text-white"
+                    ? "bg-[var(--color-roc-primary)] text-white shadow-sm"
+                    : "text-slate-400 hover:bg-white/5 hover:text-slate-200"
                 }
               `}
             >
-              <span className={active ? "text-white" : "text-slate-400"}>
+              <span className={active ? "text-white" : "text-slate-500"}>
                 {item.icon}
               </span>
               {item.label}
@@ -99,18 +104,18 @@ export function AdminSidebar() {
         })}
       </nav>
 
-      {/* External link */}
-      <div className="px-3 pb-4 border-t border-white/10 pt-4">
+      {/* Footer */}
+      <div className="px-4 pb-4 pt-3 border-t border-white/5">
         <a
           href="http://localhost:3000"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
-            text-slate-400 hover:bg-[var(--color-admin-sidebar-hover)] hover:text-white
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium
+            text-slate-500 hover:text-slate-300 hover:bg-white/5
             transition-colors duration-150"
         >
-          <ArrowSquareOut size={22} />
-          Abrir site
+          <div className="w-2 h-2 rounded-full bg-green-500" />
+          Abrir site (usuario)
         </a>
       </div>
     </>
@@ -118,7 +123,7 @@ export function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile hamburger button */}
+      {/* Mobile hamburger */}
       <button
         type="button"
         onClick={() => setMobileOpen(!mobileOpen)}

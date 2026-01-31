@@ -20,7 +20,7 @@ export default function AdminLoginPage() {
 
     try {
       await adminApi.login(email, password);
-      router.push("/");
+      router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Erro ao fazer login");
     } finally {
