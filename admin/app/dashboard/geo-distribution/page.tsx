@@ -44,6 +44,21 @@ interface GeoStatsResponse {
 
 type MapView = "rondonia" | "brasil";
 
+// Mapa de sigla (codigo IPWHOIS region_code) -> nome no GeoJSON IBGE
+const SIGLA_TO_GEO_NAME: Record<string, string> = {
+  AC: "Acre", AL: "Alagoas", AP: "Amapa", AM: "Amazonas",
+  BA: "Bahia", CE: "Ceara", DF: "Distrito Federal", ES: "Espirito Santo",
+  GO: "Goias", MA: "Maranhao", MT: "Mato Grosso", MS: "Mato Grosso do Sul",
+  MG: "Minas Gerais", PA: "Para", PB: "Paraiba", PR: "Parana",
+  PE: "Pernambuco", PI: "Piaui", RJ: "Rio de Janeiro", RN: "Rio Grande do Norte",
+  RS: "Rio Grande do Sul", RO: "Rondonia", RR: "Roraima", SC: "Santa Catarina",
+  SP: "Sao Paulo", SE: "Sergipe", TO: "Tocantins",
+};
+
+function resolveStateName(state: string, stateName: string): string {
+  return SIGLA_TO_GEO_NAME[state] || stateName;
+}
+
 const PERIODS = [
   { label: "7d", days: 7 },
   { label: "30d", days: 30 },
@@ -131,10 +146,8 @@ export default function GeoDistributionPage() {
         tooltip: {
           trigger: "item",
           formatter: (params: any) => {
-            if (params.value !== undefined && params.value !== null) {
-              return `<strong>${params.name}</strong><br/>${params.value} acessos`;
-            }
-            return `<strong>${params.name}</strong><br/>0 acessos`;
+            const val = typeof params.value === "number" && !isNaN(params.value) ? params.value : 0;
+            return `<strong>${params.name}</strong><br/>${val} acessos`;
           },
         },
         visualMap: {
@@ -190,7 +203,7 @@ export default function GeoDistributionPage() {
       }
 
       for (const s of stats.otherStates) {
-        stateData.push({ name: s.state_name, value: s.count });
+        stateData.push({ name: resolveStateName(s.state, s.state_name), value: s.count });
       }
 
       const allValues = stateData.map((d) => d.value);
@@ -200,10 +213,8 @@ export default function GeoDistributionPage() {
         tooltip: {
           trigger: "item",
           formatter: (params: any) => {
-            if (params.value !== undefined && params.value !== null) {
-              return `<strong>${params.name}</strong><br/>${params.value} acessos`;
-            }
-            return `<strong>${params.name}</strong><br/>0 acessos`;
+            const val = typeof params.value === "number" && !isNaN(params.value) ? params.value : 0;
+            return `<strong>${params.name}</strong><br/>${val} acessos`;
           },
         },
         visualMap: {
@@ -341,7 +352,7 @@ export default function GeoDistributionPage() {
         allStates.push({ name: "Rondonia", count: roTotal });
       }
       for (const s of stats.otherStates) {
-        allStates.push({ name: s.state_name, count: s.count });
+        allStates.push({ name: resolveStateName(s.state, s.state_name), count: s.count });
       }
 
       const sortedStates = [...allStates].sort((a, b) => a.count - b.count);

@@ -181,11 +181,18 @@ export class AdminController {
   @Post("geo-stats/track")
   async trackGeoIp(
     @Request() req: any,
+    @Body() body: { ip?: string },
     @CurrentUser() admin: CurrentUserData,
   ) {
-    const forwarded = req.headers?.["x-forwarded-for"];
-    const rawIp = forwarded ? forwarded.split(",")[0].trim() : req.ip;
-    const clientIp = (rawIp || "").replace(/^::ffff:/, "");
+    // Prioridade: IP enviado pelo browser > x-forwarded-for > req.ip
+    let clientIp = "";
+    if (body?.ip && /^\d{1,3}(\.\d{1,3}){3}$/.test(body.ip)) {
+      clientIp = body.ip;
+    } else {
+      const forwarded = req.headers?.["x-forwarded-for"];
+      const rawIp = forwarded ? forwarded.split(",")[0].trim() : req.ip;
+      clientIp = (rawIp || "").replace(/^::ffff:/, "");
+    }
     console.log(`[ADMIN] Geo track: adminId=${admin.id}, ip=${clientIp}`);
     if (clientIp && admin.id) {
       await this.geolocationService.trackLoginEvent(admin.id, clientIp);

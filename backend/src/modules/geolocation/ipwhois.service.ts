@@ -18,16 +18,60 @@ const PRIVATE_IP_REGEX =
 
 @Injectable()
 export class IpwhoisService {
-  async lookup(ip: string): Promise<IpwhoisResponse | null> {
-    if (!ip || PRIVATE_IP_REGEX.test(ip)) {
+  /**
+   * Verifica se um IP e privado/localhost.
+   */
+  isPrivateIp(ip: string): boolean {
+    return !ip || PRIVATE_IP_REGEX.test(ip);
+  }
+
+  /**
+   * Busca o IP publico do servidor (para fallback quando IP local).
+   * Chama ipwho.is sem IP para obter o IP de saida do servidor.
+   */
+  async getPublicIp(): Promise<string | null> {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+
+      const response = await fetch("https://ipwho.is/", {
+        signal: controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) return null;
+
+      const data = await response.json();
+      return data.success && data.ip ? data.ip : null;
+    } catch {
       return null;
+    }
+  }
+
+  /**
+   * Consulta IPWHOIS.IO para um IP especifico.
+   * Para IPs privados, tenta detectar o IP publico do servidor como fallback.
+   */
+  async lookup(ip: string): Promise<IpwhoisResponse | null> {
+    let targetIp = ip;
+
+    if (this.isPrivateIp(ip)) {
+      console.log(`[IPWHOIS] IP privado detectado (${ip}), buscando IP publico...`);
+      const publicIp = await this.getPublicIp();
+      if (!publicIp) {
+        console.log("[IPWHOIS] Nao foi possivel detectar IP publico");
+        return null;
+      }
+      console.log(`[IPWHOIS] IP publico detectado: ${publicIp}`);
+      targetIp = publicIp;
     }
 
     try {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 5000);
 
-      const response = await fetch(`https://ipwho.is/${ip}`, {
+      const response = await fetch(`https://ipwho.is/${targetIp}`, {
         signal: controller.signal,
       });
 

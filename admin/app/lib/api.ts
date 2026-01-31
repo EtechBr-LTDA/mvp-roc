@@ -187,8 +187,24 @@ class AdminApiClient {
   }
 
   async trackGeoIp() {
+    // Detectar IP publico do browser via ipwho.is
+    let detectedIp: string | undefined;
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 3000);
+      const resp = await fetch("https://ipwho.is/", { signal: controller.signal });
+      clearTimeout(timeout);
+      const data = await resp.json();
+      if (data.success && data.ip) {
+        detectedIp = data.ip;
+      }
+    } catch {
+      // Fallback: backend tentara usar x-forwarded-for ou req.ip
+    }
+
     return this.request<{ message: string; ip: string }>("/admin/geo-stats/track", {
       method: "POST",
+      body: JSON.stringify(detectedIp ? { ip: detectedIp } : {}),
     });
   }
 
