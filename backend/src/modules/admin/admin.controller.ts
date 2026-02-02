@@ -12,24 +12,29 @@ import {
   Request,
 } from "@nestjs/common";
 import { AdminService } from "./admin.service";
+import { StatsService } from "./stats.service";
 import { GeolocationService } from "../geolocation/geolocation.service";
+import { PermissionGuard } from "../auth/permission.guard";
+import { Permission } from "../auth/permission.decorator";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { AdminGuard } from "../auth/admin.guard";
 import { Roles } from "../auth/roles.decorator";
 import { CurrentUser, CurrentUserData } from "../auth/current-user.decorator";
 
 @Controller("admin")
-@UseGuards(JwtAuthGuard, AdminGuard)
-@Roles("admin", "super_admin")
+@UseGuards(JwtAuthGuard, AdminGuard, PermissionGuard)
+@Roles("admin", "super_admin", "editor", "viewer")
 export class AdminController {
   constructor(
     private readonly adminService: AdminService,
+    private readonly statsService: StatsService,
     private readonly geolocationService: GeolocationService,
   ) {}
 
   // ==================== DASHBOARD ====================
 
   @Get("dashboard")
+  @Permission("dashboard.view")
   async getDashboard() {
     return this.adminService.getDashboardStats();
   }
@@ -37,6 +42,7 @@ export class AdminController {
   // ==================== USERS ====================
 
   @Get("users")
+  @Permission("users.list")
   async listUsers(
     @Query("page") page?: string,
     @Query("limit") limit?: string,
@@ -52,6 +58,7 @@ export class AdminController {
   }
 
   @Get("users/:id")
+  @Permission("users.detail")
   async getUserDetail(@Param("id") id: string) {
     if (!id.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
       throw new BadRequestException("ID invalido");
@@ -60,6 +67,7 @@ export class AdminController {
   }
 
   @Post("users/:id/suspend")
+  @Permission("users.suspend")
   async suspendUser(
     @Param("id") id: string,
     @CurrentUser() admin: CurrentUserData
@@ -72,6 +80,7 @@ export class AdminController {
   }
 
   @Post("users/:id/activate")
+  @Permission("users.activate")
   async activateUser(
     @Param("id") id: string,
     @CurrentUser() admin: CurrentUserData
@@ -86,6 +95,7 @@ export class AdminController {
   // ==================== RESTAURANTS ====================
 
   @Get("restaurants")
+  @Permission("restaurants.list")
   async listRestaurants(
     @Query("page") page?: string,
     @Query("limit") limit?: string,
@@ -101,6 +111,7 @@ export class AdminController {
   }
 
   @Post("restaurants")
+  @Permission("restaurants.create")
   async createRestaurant(
     @Body() body: { name: string; city: string; discount_label: string; image_url?: string; category?: string; description?: string },
     @CurrentUser() admin: CurrentUserData
@@ -112,6 +123,7 @@ export class AdminController {
   }
 
   @Put("restaurants/:id")
+  @Permission("restaurants.update")
   async updateRestaurant(
     @Param("id") id: string,
     @Body() body: { name?: string; city?: string; discount_label?: string; image_url?: string; category?: string; description?: string; active?: boolean },
@@ -123,6 +135,7 @@ export class AdminController {
   }
 
   @Patch("restaurants/:id/toggle")
+  @Permission("restaurants.toggle")
   async toggleRestaurant(
     @Param("id") id: string,
     @CurrentUser() admin: CurrentUserData
@@ -135,6 +148,7 @@ export class AdminController {
   // ==================== VOUCHERS ====================
 
   @Get("vouchers")
+  @Permission("vouchers.list")
   async listVouchers(
     @Query("page") page?: string,
     @Query("limit") limit?: string,
@@ -154,6 +168,7 @@ export class AdminController {
   }
 
   @Post("vouchers/:id/validate")
+  @Permission("vouchers.validate")
   async manualValidate(
     @Param("id") id: string,
     @CurrentUser() admin: CurrentUserData
@@ -167,18 +182,21 @@ export class AdminController {
   // ==================== GEO STATS ====================
 
   @Get("geo-stats")
+  @Permission("geo.stats")
   async getGeoStats(@Query("days") days?: string) {
     const d = days ? parseInt(days, 10) : 30;
     return this.geolocationService.getStatsByCity(d);
   }
 
   @Get("geo-stats/events")
+  @Permission("geo.events")
   async getGeoEvents(@Query("limit") limit?: string) {
     const l = limit ? Math.min(parseInt(limit, 10), 100) : 50;
     return this.geolocationService.getRecentEvents(l);
   }
 
   @Post("geo-stats/track")
+  @Permission("geo.track")
   async trackGeoIp(
     @Request() req: any,
     @Body() body: { ip?: string },
@@ -203,6 +221,7 @@ export class AdminController {
   // ==================== AUDIT LOGS ====================
 
   @Get("audit-logs")
+  @Permission("audit.list")
   async getAuditLogs(
     @Query("page") page?: string,
     @Query("limit") limit?: string,
@@ -215,5 +234,25 @@ export class AdminController {
       action,
       admin_id: adminId,
     });
+  }
+
+  // ==================== STATS ====================
+
+  @Get("stats/users")
+  @Permission("stats.users")
+  async getUserStats(
+    @Query("start") start?: string,
+    @Query("end") end?: string,
+  ) {
+    return this.statsService.getUserStats(start, end);
+  }
+
+  @Get("stats/financial")
+  @Permission("stats.financial")
+  async getFinancialStats(
+    @Query("start") start?: string,
+    @Query("end") end?: string,
+  ) {
+    return this.statsService.getFinancialStats(start, end);
   }
 }

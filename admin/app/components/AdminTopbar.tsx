@@ -7,11 +7,17 @@ import { adminApi } from "../lib/api";
 
 const pageTitles: Record<string, string> = {
   "/dashboard": "Dashboard",
+  "/dashboard/stats/users": "Estatisticas - Usuarios",
+  "/dashboard/stats/financial": "Estatisticas - Financeiro",
   "/dashboard/users": "Usuarios",
   "/dashboard/geo-distribution": "Distribuicao Geografica",
   "/dashboard/restaurants": "Restaurantes",
   "/dashboard/vouchers": "Vouchers",
-  "/dashboard/audit-logs": "Audit Logs",
+  "/dashboard/system/settings": "Configuracao Geral",
+  "/dashboard/audit-logs": "Logs de Auditoria",
+  "/dashboard/admin/users-roles": "Usuarios e Cargos",
+  "/dashboard/admin/permissions": "Acoes do Sistema",
+  "/dashboard/admin/role-permissions": "Permissoes por Cargo",
 };
 
 function derivePageTitle(pathname: string): string {
@@ -51,8 +57,13 @@ export function AdminTopbar() {
 
   const title = derivePageTitle(pathname);
 
-  const roleLabel =
-    adminRole === "super_admin" ? "Super Admin" : "Admin";
+  const roleLabels: Record<string, string> = {
+    super_admin: "Super Admin",
+    admin: "Admin",
+    editor: "Editor",
+    viewer: "Viewer",
+  };
+  const roleLabel = roleLabels[adminRole] || "Admin";
 
   return (
     <header
@@ -76,7 +87,11 @@ export function AdminTopbar() {
               ${
                 adminRole === "super_admin"
                   ? "bg-purple-100 text-purple-700"
-                  : "bg-blue-100 text-blue-700"
+                  : adminRole === "editor"
+                    ? "bg-green-100 text-green-700"
+                    : adminRole === "viewer"
+                      ? "bg-gray-100 text-gray-700"
+                      : "bg-blue-100 text-blue-700"
               }
             `}
           >

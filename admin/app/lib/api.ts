@@ -87,7 +87,7 @@ class AdminApiClient {
       body: JSON.stringify({ email, password }),
     });
 
-    if (!data.user.role || !["admin", "super_admin"].includes(data.user.role)) {
+    if (!data.user.role || !["admin", "super_admin", "editor", "viewer"].includes(data.user.role)) {
       throw { message: "Acesso restrito a administradores", status: 403 };
     }
 
@@ -218,6 +218,91 @@ class AdminApiClient {
     return this.request<{ data: any[]; total: number; page: number; totalPages: number }>(
       `/admin/audit-logs?${query}`
     );
+  }
+
+  // Stats
+  async getUserStats(params?: { start?: string; end?: string }) {
+    const query = new URLSearchParams();
+    if (params?.start) query.set("start", params.start);
+    if (params?.end) query.set("end", params.end);
+    return this.request<any>(`/admin/stats/users?${query}`);
+  }
+
+  async getFinancialStats(params?: { start?: string; end?: string }) {
+    const query = new URLSearchParams();
+    if (params?.start) query.set("start", params.start);
+    if (params?.end) query.set("end", params.end);
+    return this.request<any>(`/admin/stats/financial?${query}`);
+  }
+
+  // System Settings
+  async getSystemSettings() {
+    return this.request<{ settings: any[]; grouped: Record<string, any[]> }>("/admin/system-settings");
+  }
+
+  async updateSystemSettings(settings: Record<string, any>) {
+    return this.request<{ updated: number; settings: any[] }>("/admin/system-settings", {
+      method: "PUT",
+      body: JSON.stringify({ settings }),
+    });
+  }
+
+  // RBAC - Roles
+  async getRbacRoles() {
+    return this.request<any[]>("/admin/rbac/roles");
+  }
+
+  async getRbacRoleDetail(roleId: number) {
+    return this.request<any>(`/admin/rbac/roles/${roleId}`);
+  }
+
+  async createRbacRole(data: { name: string; display_name: string; description?: string }) {
+    return this.request<any>("/admin/rbac/roles", { method: "POST", body: JSON.stringify(data) });
+  }
+
+  async updateRbacRole(roleId: number, data: { display_name?: string; description?: string }) {
+    return this.request<any>(`/admin/rbac/roles/${roleId}`, { method: "PUT", body: JSON.stringify(data) });
+  }
+
+  async deleteRbacRole(roleId: number) {
+    return this.request<any>(`/admin/rbac/roles/${roleId}`, { method: "DELETE" });
+  }
+
+  async setRbacRolePermissions(roleId: number, permissionIds: number[]) {
+    return this.request<any>(`/admin/rbac/roles/${roleId}/permissions`, {
+      method: "PUT",
+      body: JSON.stringify({ permission_ids: permissionIds }),
+    });
+  }
+
+  // RBAC - Permissions
+  async getRbacPermissions() {
+    return this.request<{ permissions: any[]; grouped: Record<string, any[]> }>("/admin/rbac/permissions");
+  }
+
+  // RBAC - Admin Users
+  async getAdminUsers() {
+    return this.request<any[]>("/admin/rbac/users");
+  }
+
+  async createAdminUser(data: { email: string; name: string; password: string; role_id: number }) {
+    return this.request<any>("/admin/rbac/users", { method: "POST", body: JSON.stringify(data) });
+  }
+
+  async updateAdminUserRole(userId: string, roleId: number) {
+    return this.request<any>(`/admin/rbac/users/${userId}/role`, {
+      method: "PUT",
+      body: JSON.stringify({ role_id: roleId }),
+    });
+  }
+
+  async removeAdminUser(userId: string) {
+    return this.request<any>(`/admin/rbac/users/${userId}`, { method: "DELETE" });
+  }
+
+  // My Permissions
+  async getMyPermissions() {
+    return this.request<string[]>("/admin/rbac/my-permissions");
   }
 }
 

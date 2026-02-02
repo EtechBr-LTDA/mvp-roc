@@ -10,6 +10,8 @@ import { RestaurantsModule } from "./modules/restaurants/restaurants.module";
 import { VouchersModule } from "./modules/vouchers/vouchers.module";
 import { ValidationModule } from "./modules/validation/validation.module";
 import { AdminModule } from "./modules/admin/admin.module";
+import { RbacModule } from "./modules/rbac/rbac.module";
+import { SystemSettingsModule } from "./modules/system-settings/system-settings.module";
 import { GeolocationModule } from "./modules/geolocation/geolocation.module";
 
 @Module({
@@ -54,6 +56,8 @@ import { GeolocationModule } from "./modules/geolocation/geolocation.module";
     VouchersModule,
     ValidationModule,
     AdminModule,
+    RbacModule,
+    SystemSettingsModule,
     GeolocationModule,
   ],
   providers: [
