@@ -183,9 +183,15 @@ export class AdminController {
 
   @Get("geo-stats")
   @Permission("geo.stats")
-  async getGeoStats(@Query("days") days?: string) {
+  async getGeoStats(
+    @Query("days") days?: string,
+    @Query("event_types") eventTypesStr?: string,
+  ) {
     const d = days ? parseInt(days, 10) : 30;
-    return this.geolocationService.getStatsByCity(d);
+    const eventTypes = eventTypesStr
+      ? eventTypesStr.split(",").map((t) => t.trim())
+      : ["login", "register"];
+    return this.geolocationService.getGeoStats(d, eventTypes);
   }
 
   @Get("geo-stats/events")
@@ -213,7 +219,7 @@ export class AdminController {
     }
     console.log(`[ADMIN] Geo track: adminId=${admin.id}, ip=${clientIp}`);
     if (clientIp && admin.id) {
-      await this.geolocationService.trackLoginEvent(admin.id, clientIp);
+      await this.geolocationService.trackLoginEvent(admin.id, clientIp, "admin_track");
     }
     return { message: "Geo tracking realizado", ip: clientIp };
   }

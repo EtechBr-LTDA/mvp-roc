@@ -173,13 +173,17 @@ class AdminApiClient {
   }
 
   // Geo Stats
-  async getGeoStats(days: number = 30) {
+  async getGeoStats(params?: { days?: number; event_types?: string[] }) {
+    const query = new URLSearchParams();
+    if (params?.days) query.set("days", params.days.toString());
+    if (params?.event_types) query.set("event_types", params.event_types.join(","));
     return this.request<{
-      cities: { city: string; count: number }[];
-      otherStates: { state: string; state_name: string; count: number }[];
-      otherStatesTotal: number;
-      total: number;
-    }>(`/admin/geo-stats?days=${days}`);
+      totals: { unique_users: number; total_events: number; new_users: number; returning_users: number };
+      cities: { city?: string; unique_users: number; total_events: number }[];
+      other_states: { state?: string; state_name?: string; unique_users: number; total_events: number }[];
+      all_states: { state?: string; state_name?: string; unique_users: number; total_events: number }[];
+      weekly_trend: { week: string; unique_users: number; total_events: number; new_users: number }[];
+    }>(`/admin/geo-stats?${query}`);
   }
 
   async getGeoEvents(limit: number = 50) {

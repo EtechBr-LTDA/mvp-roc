@@ -11,22 +11,30 @@ export interface GeoData {
   longitude: number;
 }
 
-export interface CityStats {
-  city: string;
-  count: number;
-}
-
-export interface OtherStateStats {
-  state: string;
-  state_name: string;
-  count: number;
+export interface LocationStats {
+  city?: string;
+  state?: string;
+  state_name?: string;
+  unique_users: number;
+  total_events: number;
 }
 
 export interface GeoStatsResponse {
-  cities: CityStats[];
-  otherStates: OtherStateStats[];
-  otherStatesTotal: number;
-  total: number;
+  totals: {
+    unique_users: number;
+    total_events: number;
+    new_users: number;
+    returning_users: number;
+  };
+  cities: LocationStats[];
+  other_states: LocationStats[];
+  all_states: LocationStats[];
+  weekly_trend: {
+    week: string;
+    unique_users: number;
+    total_events: number;
+    new_users: number;
+  }[];
 }
 
 @Injectable()
@@ -97,9 +105,9 @@ export class GeolocationService {
   /**
    * Registra evento de geolocalizacao.
    */
-  async trackLoginEvent(profileId: string, rawIp: string): Promise<void> {
+  async trackLoginEvent(profileId: string, rawIp: string, eventType: string = "login"): Promise<void> {
     const ip = this.cleanIp(rawIp);
-    console.log(`[GEO] trackLoginEvent: profileId=${profileId}, ip=${ip}`);
+    console.log(`[GEO] trackEvent: profileId=${profileId}, ip=${ip}, type=${eventType}`);
 
     try {
       const geo = await this.resolveIp(ip);
@@ -111,7 +119,7 @@ export class GeolocationService {
         state: geo?.state || null,
         state_name: geo?.state_name || null,
         city: geo?.city || null,
-        event_type: "login",
+        event_type: eventType,
       });
 
       if (insertError) {
@@ -125,57 +133,102 @@ export class GeolocationService {
   }
 
   /**
-   * Busca estatisticas por cidade (RO) + outros estados.
+   * Busca estatisticas geograficas com usuarios unicos e total de eventos.
+   * Usa funcao RPC do Supabase, com fallback manual.
    */
-  async getStatsByCity(days: number = 30): Promise<GeoStatsResponse> {
+  async getGeoStats(
+    days: number = 30,
+    eventTypes: string[] = ["login", "register"],
+  ): Promise<GeoStatsResponse> {
+    // Tentar RPC primeiro
+    const { data, error } = await this.supabase.rpc("get_geo_stats", {
+      p_days: days,
+      p_event_types: eventTypes,
+    });
+
+    if (!error && data) {
+      return data as GeoStatsResponse;
+    }
+
+    console.error("[GEO] RPC get_geo_stats falhou, usando fallback:", error?.message);
+    return this.getGeoStatsFallback(days, eventTypes);
+  }
+
+  /**
+   * Fallback caso a funcao RPC nao exista ainda.
+   */
+  private async getGeoStatsFallback(
+    days: number,
+    eventTypes: string[],
+  ): Promise<GeoStatsResponse> {
     const since = new Date();
     since.setDate(since.getDate() - days);
 
-    const { data: events, error } = await this.supabase
+    let query = this.supabase
       .from("user_geo_events")
-      .select("city, state, state_name")
+      .select("profile_id, city, state, state_name")
       .gte("created_at", since.toISOString())
       .not("city", "is", null);
+
+    if (eventTypes.length > 0) {
+      query = query.in("event_type", eventTypes);
+    }
+
+    const { data: events, error } = await query;
 
     if (error) {
       throw new Error(`Erro ao buscar geo stats: ${error.message}`);
     }
 
-    const cityMap = new Map<string, number>();
-    const otherStatesMap = new Map<string, { state: string; state_name: string; count: number }>();
-    let total = 0;
+    // Calcular unique users e total events
+    const cityMap = new Map<string, { users: Set<string>; count: number }>();
+    const stateMap = new Map<string, { state_name: string; users: Set<string>; count: number }>();
+    const allUsers = new Set<string>();
 
     for (const event of events || []) {
-      total++;
+      allUsers.add(event.profile_id);
+
+      const stateKey = event.state || "??";
+      if (!stateMap.has(stateKey)) {
+        stateMap.set(stateKey, { state_name: event.state_name || "Desconhecido", users: new Set(), count: 0 });
+      }
+      const stateEntry = stateMap.get(stateKey)!;
+      stateEntry.users.add(event.profile_id);
+      stateEntry.count++;
 
       if (event.state === "RO") {
         const city = event.city || "Desconhecida";
-        cityMap.set(city, (cityMap.get(city) || 0) + 1);
-      } else {
-        const key = event.state || "??";
-        const existing = otherStatesMap.get(key);
-        if (existing) {
-          existing.count++;
-        } else {
-          otherStatesMap.set(key, {
-            state: event.state || "??",
-            state_name: event.state_name || "Desconhecido",
-            count: 1,
-          });
+        if (!cityMap.has(city)) {
+          cityMap.set(city, { users: new Set(), count: 0 });
         }
+        const cityEntry = cityMap.get(city)!;
+        cityEntry.users.add(event.profile_id);
+        cityEntry.count++;
       }
     }
 
-    const cities: CityStats[] = Array.from(cityMap.entries())
-      .map(([city, count]) => ({ city, count }))
-      .sort((a, b) => b.count - a.count);
+    const cities: LocationStats[] = Array.from(cityMap.entries())
+      .map(([city, data]) => ({ city, unique_users: data.users.size, total_events: data.count }))
+      .sort((a, b) => b.unique_users - a.unique_users);
 
-    const otherStates: OtherStateStats[] = Array.from(otherStatesMap.values())
-      .sort((a, b) => b.count - a.count);
+    const allStates: LocationStats[] = Array.from(stateMap.entries())
+      .map(([state, data]) => ({ state, state_name: data.state_name, unique_users: data.users.size, total_events: data.count }))
+      .sort((a, b) => b.unique_users - a.unique_users);
 
-    const otherStatesTotal = otherStates.reduce((sum, s) => sum + s.count, 0);
+    const otherStates = allStates.filter((s) => s.state !== "RO");
 
-    return { cities, otherStates, otherStatesTotal, total };
+    return {
+      totals: {
+        unique_users: allUsers.size,
+        total_events: (events || []).length,
+        new_users: 0,
+        returning_users: 0,
+      },
+      cities,
+      other_states: otherStates,
+      all_states: allStates,
+      weekly_trend: [],
+    };
   }
 
   /**

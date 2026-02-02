@@ -119,7 +119,7 @@ export class AuthController {
       const clientIp = this.extractClientIp(req);
       console.log(`[AUTH] Register geo tracking: userId=${result.user?.id}, ip=${clientIp}`);
       if (clientIp && result.user?.id) {
-        this.geolocationService.trackLoginEvent(result.user.id, clientIp).catch((err) => {
+        this.geolocationService.trackLoginEvent(result.user.id, clientIp, "register").catch((err) => {
           console.error("[AUTH] Erro geo tracking (register):", err?.message || err);
         });
       }
