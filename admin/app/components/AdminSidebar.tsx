@@ -257,7 +257,7 @@ export function AdminSidebar() {
       {/* Footer */}
       <div className="px-4 pb-4 pt-3 border-t border-white/5">
         <a
-          href="http://localhost:3000"
+          href={process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000"}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium
