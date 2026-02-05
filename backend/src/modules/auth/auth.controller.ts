@@ -50,9 +50,11 @@ export class AuthController {
   ) {}
 
   private extractClientIp(req: any): string {
+    // Cloudflare: cf-connecting-ip contem o IP real do usuario
+    const cfIp = req.headers?.["cf-connecting-ip"];
+    if (cfIp) return (cfIp as string).replace(/^::ffff:/, "");
     const forwarded = req.headers?.["x-forwarded-for"];
     const ip = forwarded ? forwarded.split(",")[0].trim() : req.ip;
-    // Remove ::ffff: prefix (IPv4-mapped IPv6)
     return (ip || "").replace(/^::ffff:/, "");
   }
 

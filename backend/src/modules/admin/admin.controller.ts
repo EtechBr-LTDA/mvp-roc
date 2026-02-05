@@ -208,13 +208,19 @@ export class AdminController {
     @Body() body: { ip?: string },
     @CurrentUser() admin: CurrentUserData,
   ) {
-    // Prioridade: IP enviado pelo browser > x-forwarded-for > req.ip
+    // Prioridade: IP do browser > cf-connecting-ip (Cloudflare) > x-forwarded-for > req.ip
     let clientIp = "";
     if (body?.ip && /^\d{1,3}(\.\d{1,3}){3}$/.test(body.ip)) {
       clientIp = body.ip;
     } else {
-      const forwarded = req.headers?.["x-forwarded-for"];
-      const rawIp = forwarded ? forwarded.split(",")[0].trim() : req.ip;
+      const cfIp = req.headers?.["cf-connecting-ip"];
+      let rawIp: string;
+      if (cfIp) {
+        rawIp = cfIp as string;
+      } else {
+        const forwarded = req.headers?.["x-forwarded-for"];
+        rawIp = forwarded ? forwarded.split(",")[0].trim() : req.ip;
+      }
       clientIp = (rawIp || "").replace(/^::ffff:/, "");
     }
     console.log(`[ADMIN] Geo track: adminId=${admin.id}, ip=${clientIp}`);
